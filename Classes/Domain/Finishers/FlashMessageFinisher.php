@@ -108,6 +108,7 @@ class FlashMessageFinisher extends AbstractFinisher
             ContextualFeedbackSeverity::ERROR => Error::class,
             default => Message::class,
         };
+        /** @var Message|Notice|Warning|Error $message */
         $message = GeneralUtility::makeInstance($messageClass, $messageBody, $messageCode, $messageArguments, $messageTitle);
         $flashMessage = GeneralUtility::makeInstance(
             FlashMessage::class,
