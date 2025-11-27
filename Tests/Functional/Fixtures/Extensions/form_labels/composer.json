@@ -2,13 +2,19 @@
 	"name": "typo3tests/test-form-labels",
 	"type": "typo3-cms-extension",
 	"description": "",
-	"license": ["GPL-2.0-or-later"],
+	"version": "1.0.0",
+	"license": [
+		"GPL-2.0-or-later"
+	],
 	"require": {
 		"typo3/cms-core": "14.2.*@dev"
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "form_labels"
+			"extension-key": "form_labels",
+			"Package": {
+				"providesPackages": []
+			}
 		}
 	}
 }
