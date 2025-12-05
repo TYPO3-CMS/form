@@ -22,6 +22,7 @@ use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Form\Domain\Finishers\Exception\FinisherException;
 use TYPO3\CMS\Form\Domain\Model\FormElements\FormElementInterface;
 
@@ -242,18 +243,22 @@ class SaveToDatabaseFinisher extends AbstractFinisher
                 continue;
             }
 
-            if ($elementValue instanceof FileReference) {
-                if (isset($elementsConfiguration[$elementIdentifier]['saveFileIdentifierInsteadOfUid'])) {
-                    $saveFileIdentifierInsteadOfUid = (bool)$elementsConfiguration[$elementIdentifier]['saveFileIdentifierInsteadOfUid'];
-                } else {
-                    $saveFileIdentifierInsteadOfUid = false;
-                }
+            if (isset($elementsConfiguration[$elementIdentifier]['saveFileIdentifierInsteadOfUid'])) {
+                $saveFileIdentifierInsteadOfUid = (bool)$elementsConfiguration[$elementIdentifier]['saveFileIdentifierInsteadOfUid'];
+            } else {
+                $saveFileIdentifierInsteadOfUid = false;
+            }
 
-                if ($saveFileIdentifierInsteadOfUid) {
-                    $elementValue = $elementValue->getOriginalResource()->getCombinedIdentifier();
-                } else {
-                    $elementValue = $elementValue->getOriginalResource()->getProperty('uid_local');
+            if ($elementValue instanceof FileReference) {
+                $elementValue = $this->prepareFileForDatabase($elementValue, $saveFileIdentifierInsteadOfUid);
+            } elseif ($elementValue instanceof ObjectStorage) {
+                $fileIdentifiers = [];
+                foreach ($elementValue as $singleElement) {
+                    if ($singleElement instanceof FileReference) {
+                        $fileIdentifiers[] = $this->prepareFileForDatabase($singleElement, $saveFileIdentifierInsteadOfUid);
+                    }
                 }
+                $elementValue = implode(',', $fileIdentifiers);
             } elseif (is_array($elementValue)) {
                 $elementValue = implode(',', $elementValue);
             } elseif ($elementValue instanceof \DateTimeInterface) {
@@ -380,5 +385,16 @@ class SaveToDatabaseFinisher extends AbstractFinisher
             ->getFormRuntime()
             ->getFormDefinition()
             ->getElementByIdentifier($elementIdentifier);
+    }
+
+    protected function prepareFileForDatabase(FileReference $fileReference, bool $saveFileIdentifierInsteadOfUid = false): int|string
+    {
+        if ($saveFileIdentifierInsteadOfUid) {
+            $elementValue = $fileReference->getOriginalResource()->getCombinedIdentifier();
+        } else {
+            $elementValue = $fileReference->getOriginalResource()->getProperty('uid_local');
+        }
+
+        return $elementValue;
     }
 }

@@ -42,13 +42,16 @@ class PropertyMappingConfiguration implements AfterFormStateInitializedInterface
     }
 
     /**
-     * If the form runtime is able to process form submissions
-     * (determined by $formRuntime->canProcessFormSubmission()) then a
-     * 'form session' is available.
-     * This form session identifier will be used to deriving storage sub-folders
-     * for the file uploads.
-     * This is done by setting `UploadedFileReferenceConverter::CONFIGURATION_UPLOAD_SEED`
-     * type converter option.
+     * Adjusts property mapping configuration for file upload elements at runtime.
+     *
+     * At this point, form definition properties (from YAML) are fully available,
+     * unlike in initializeFormElement() which runs before YAML properties are set.
+     *
+     * This sets:
+     * - CONFIGURATION_UPLOAD_SEED: derived from the form session identifier
+     *   for creating storage sub-folders.
+     * - CONFIGURATION_ALLOW_REMOVAL: from the element's 'allowRemoval' property
+     *   to enable HMAC-signed file deletion.
      */
     protected function adjustPropertyMappingForFileUploadsAtRuntime(
         FormRuntime $formRuntime,
@@ -60,13 +63,20 @@ class PropertyMappingConfiguration implements AfterFormStateInitializedInterface
         ) {
             return;
         }
-        $renderable->getRootForm()
+        $propertyMappingConfiguration = $renderable->getRootForm()
             ->getProcessingRule($renderable->getIdentifier())
-            ->getPropertyMappingConfiguration()
-            ->setTypeConverterOption(
-                UploadedFileReferenceConverter::class,
-                UploadedFileReferenceConverter::CONFIGURATION_UPLOAD_SEED,
-                $formRuntime->getFormSession()->getIdentifier()
-            );
+            ->getPropertyMappingConfiguration();
+
+        $propertyMappingConfiguration->setTypeConverterOption(
+            UploadedFileReferenceConverter::class,
+            UploadedFileReferenceConverter::CONFIGURATION_UPLOAD_SEED,
+            $formRuntime->getFormSession()->getIdentifier()
+        );
+
+        $propertyMappingConfiguration->setTypeConverterOption(
+            UploadedFileReferenceConverter::class,
+            UploadedFileReferenceConverter::CONFIGURATION_ALLOW_REMOVAL,
+            (bool)($renderable->getProperties()['allowRemoval'] ?? false)
+        );
     }
 }

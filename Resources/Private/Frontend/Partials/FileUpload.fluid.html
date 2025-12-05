@@ -18,11 +18,47 @@
                 additionalAttributes="{formvh:translateElementProperty(element: element, property: 'fluidAdditionalAttributes')}"
                 accept="{element.properties.allowedMimeTypes}"
                 aria="{aria}"
+                multiple="{element.properties.multiple}"
             >
                 <f:if condition="{resource}">
-                    <div id="{element.uniqueIdentifier}-preview">
-                        {resource.originalResource.originalFile.name}
-                    </div>
+                    <f:if condition="{element.properties.multiple}">
+                        <f:then>
+                            <ul id="{element.uniqueIdentifier}-preview" class="form-element-fileupload-list">
+                                <f:for each="{resource}" as="file" iteration="iterator">
+                                    <li class="form-element-fileupload-item">
+                                        <span class="form-element-fileupload-name">{file.originalResource.originalFile.name}</span>
+                                        <f:if condition="{element.properties.allowRemoval}">
+                                            <label class="form-element-fileupload-remove">
+                                                <formvh:form.uploadDeleteCheckbox
+                                                    property="{element.identifier}"
+                                                    fileReference="{file}"
+                                                    fileIndex="{iterator.index}"
+                                                />
+                                                <f:translate key="upload.remove" domain="form" default="Remove" />
+                                                <span class="visually-hidden">{file.originalResource.originalFile.name}</span>
+                                            </label>
+                                        </f:if>
+                                    </li>
+                                </f:for>
+                            </ul>
+                        </f:then>
+                        <f:else>
+                            <div id="{element.uniqueIdentifier}-preview" class="form-element-fileupload-preview">
+                                <span class="form-element-fileupload-name">{resource.originalResource.originalFile.name}</span>
+                                <f:if condition="{element.properties.allowRemoval}">
+                                    <label class="form-element-fileupload-remove">
+                                        <formvh:form.uploadDeleteCheckbox
+                                            property="{element.identifier}"
+                                            fileReference="{resource}"
+                                            fileIndex="0"
+                                        />
+                                        <f:translate key="upload.remove" domain="form" default="Remove" />
+                                        <span class="visually-hidden">{resource.originalResource.originalFile.name}</span>
+                                    </label>
+                                </f:if>
+                            </div>
+                        </f:else>
+                    </f:if>
                 </f:if>
             </formvh:form.uploadedResource>
         </f:render>

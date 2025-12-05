@@ -22,9 +22,11 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mime\Address;
 use TYPO3\CMS\Core\Mail\FluidEmail;
 use TYPO3\CMS\Core\Mail\MailerInterface;
+use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Fluid\View\TemplatePaths;
 use TYPO3\CMS\Form\Domain\Finishers\Exception\FinisherException;
 use TYPO3\CMS\Form\Domain\Model\FormElements\FileUpload;
@@ -148,11 +150,20 @@ class EmailFinisher extends AbstractFinisher
                     continue;
                 }
                 $file = $formRuntime[$element->getIdentifier()];
-                if ($file) {
-                    if ($file instanceof FileReference) {
-                        $file = $file->getOriginalResource();
-                    }
+                if ($file instanceof FileReference) {
+                    $file = $file->getOriginalResource();
+                }
+                if ($file instanceof FileInterface) {
                     $mail->attach($file->getContents(), $file->getName(), $file->getMimeType());
+                } elseif ($file instanceof ObjectStorage) {
+                    foreach ($file as $singleFile) {
+                        if ($singleFile instanceof FileReference) {
+                            $singleFile = $singleFile->getOriginalResource();
+                        }
+                        if ($singleFile instanceof FileInterface) {
+                            $mail->attach($singleFile->getContents(), $singleFile->getName(), $singleFile->getMimeType());
+                        }
+                    }
                 }
             }
         }

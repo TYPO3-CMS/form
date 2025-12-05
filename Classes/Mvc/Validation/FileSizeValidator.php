@@ -30,7 +30,7 @@ use TYPO3\CMS\Form\Mvc\Validation\Exception\InvalidValidationOptionsException;
  * Scope: frontend
  * @internal
  */
-final class FileSizeValidator extends AbstractValidator
+final class FileSizeValidator extends AbstractValidator implements ObjectStorageElementValidatorInterface
 {
     /**
      * @var array

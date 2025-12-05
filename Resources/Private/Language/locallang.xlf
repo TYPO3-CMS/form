@@ -123,6 +123,9 @@
       <trans-unit id="upload.error.150530348">
         <source>Upload failed.</source>
       </trans-unit>
+      <trans-unit id="upload.remove">
+        <source>Remove</source>
+      </trans-unit>
       <trans-unit id="form.configuration.module.provider">
         <source>Form: YAML Configuration</source>
       </trans-unit>

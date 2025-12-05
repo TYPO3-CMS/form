@@ -23,7 +23,6 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Property\PropertyMappingConfiguration as ExtbasePropertyMappingConfiguration;
 use TYPO3\CMS\Extbase\Validation\Validator\NotEmptyValidator;
-use TYPO3\CMS\Extbase\Validation\Validator\ValidatorInterface;
 use TYPO3\CMS\Extbase\Validation\ValidatorResolver;
 use TYPO3\CMS\Form\Domain\Model\FormDefinition;
 use TYPO3\CMS\Form\Domain\Model\FormElements\FileUpload;
@@ -52,7 +51,7 @@ final class FileUploadTest extends UnitTestCase
 
         // Processing Rules
         $this->processingRule = $this->getMockBuilder(ProcessingRule::class)
-            ->onlyMethods(['getValidators', 'removeValidator', 'getPropertyMappingConfiguration'])
+            ->onlyMethods(['getValidators', 'addValidator', 'removeValidator', 'getPropertyMappingConfiguration'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -118,19 +117,6 @@ final class FileUploadTest extends UnitTestCase
             ->method('getProperties')
             ->willReturn($mimeTypes);
 
-        // Expect the array to contain the MimeTypeValidator
-        $this->extbasePropertyMappingConfiguration
-            ->expects($this->atLeastOnce())
-            ->method('setTypeConverterOptions')
-            ->willReturnCallback(function (string $typeConverter, array $options): ExtbasePropertyMappingConfiguration {
-                $this->assertArrayHasKey(UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS, $options);
-                $validators = $options[UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS];
-
-                $this->assertInstanceOf(MimeTypeValidator::class, $validators[0]);
-
-                return $this->extbasePropertyMappingConfiguration;
-            });
-
         $mimeTypeValidator = new MimeTypeValidator();
         $mimeTypeValidator->setOptions(['allowedMimeTypes' => []]);
         $validatorResolver = $this->createMock(ValidatorResolver::class);
@@ -139,6 +125,12 @@ final class FileUploadTest extends UnitTestCase
             ['allowedMimeTypes' => ['text/plain', 'application/x-www-form-urlencoded']]
         )->willReturn($mimeTypeValidator);
         GeneralUtility::setSingletonInstance(ValidatorResolver::class, $validatorResolver);
+
+        // Expect the MimeTypeValidator to be added to the ProcessingRule
+        $this->processingRule
+            ->expects($this->once())
+            ->method('addValidator')
+            ->with(self::isInstanceOf(MimeTypeValidator::class));
 
         $this->fileUpload->initializeFormElement();
     }
@@ -214,7 +206,6 @@ final class FileUploadTest extends UnitTestCase
     #[Test]
     public function afterBuildingFinishedSetsStoragePathToUserUploadIfNeitherSaveToFileMountIsSetNorThereIsAFormDefinitionPath(): void
     {
-        // Don't add any validators for now
         $this->processingRule
             ->method('getValidators')
             ->willReturn(new \SplObjectStorage());
@@ -223,12 +214,10 @@ final class FileUploadTest extends UnitTestCase
             ->method('getPersistenceIdentifier')
             ->willReturn('');
 
-        // Set the file mount
         $this->fileUpload
             ->method('getProperties')
             ->willReturn(['saveToFileMount' => '']);
 
-        // Expect the array to contain the /tmp upload directory
         $this->extbasePropertyMappingConfiguration
             ->expects($this->atLeastOnce())
             ->method('setTypeConverterOptions')
@@ -242,43 +231,29 @@ final class FileUploadTest extends UnitTestCase
     }
 
     #[Test]
-    public function afterBuildingFinishedCopiesValidators(): void
+    public function afterBuildingFinishedDoesNotAddMimeTypeValidatorWhenNoMimeTypesConfigured(): void
     {
-        // Some other Validator
-        $otherValidator = $this->createMock(ValidatorInterface::class);
-
-        // Don't add any validators for now
-        $validators = new \SplObjectStorage();
-        $validators->offsetSet($otherValidator);
-
         $this->processingRule
             ->method('getValidators')
-            ->willReturn($validators);
+            ->willReturn(new \SplObjectStorage());
 
-        // Expect the array to contain the /tmp upload directory
-        $this->extbasePropertyMappingConfiguration
-            ->expects($this->atLeastOnce())
-            ->method('setTypeConverterOptions')
-            ->willReturnCallback(function (string $typeConverter, array $options) use ($otherValidator): ExtbasePropertyMappingConfiguration {
-                $this->assertArrayHasKey(UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS, $options);
-                $validators = $options[UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS];
+        $this->fileUpload
+            ->method('getProperties')
+            ->willReturn(['allowedMimeTypes' => []]);
 
-                self::assertContains($otherValidator, $validators);
-
-                return $this->extbasePropertyMappingConfiguration;
-            });
+        $this->processingRule
+            ->expects($this->never())
+            ->method('addValidator');
 
         $this->fileUpload->initializeFormElement();
     }
 
     #[Test]
-    public function afterBuildingFinishedDoesNotCopyNotEmptyValidator(): void
+    public function afterBuildingFinishedKeepsExistingValidatorsInProcessingRule(): void
     {
-        // Not Empty Validator
         $notEmptyValidator = new NotEmptyValidator();
         $notEmptyValidator->setOptions([]);
 
-        // Don't add any validators for now
         $validators = new \SplObjectStorage();
         $validators->offsetSet($notEmptyValidator);
 
@@ -286,19 +261,12 @@ final class FileUploadTest extends UnitTestCase
             ->method('getValidators')
             ->willReturn($validators);
 
-        // Expect the array to contain the /tmp upload directory
-        $this->extbasePropertyMappingConfiguration
-            ->expects($this->atLeastOnce())
-            ->method('setTypeConverterOptions')
-            ->willReturnCallback(function (string $typeConverter, array $options) use ($notEmptyValidator): ExtbasePropertyMappingConfiguration {
-                $this->assertArrayHasKey(UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS, $options);
-                $validators = $options[UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS];
-
-                self::assertNotContains($notEmptyValidator, $validators);
-
-                return $this->extbasePropertyMappingConfiguration;
-            });
+        $this->fileUpload
+            ->method('getProperties')
+            ->willReturn(['allowedMimeTypes' => []]);
 
         $this->fileUpload->initializeFormElement();
+
+        self::assertTrue($validators->offsetExists($notEmptyValidator));
     }
 }

@@ -597,8 +597,14 @@
       <trans-unit id="formEditor.elements.FileUploadMixin.editor.validators.FileSize.label">
         <source>File size</source>
       </trans-unit>
+      <trans-unit id="formEditor.elements.FileUploadMixin.editor.validators.Count.label">
+        <source>Number of files</source>
+      </trans-unit>
       <trans-unit id="formEditor.elements.FileUploadMixin.validators.FileSize.editor.header.label">
         <source>File size</source>
+      </trans-unit>
+      <trans-unit id="formEditor.elements.FileUploadMixin.validators.Count.editor.header.label">
+        <source>Number of uploaded files</source>
       </trans-unit>
       <trans-unit id="formEditor.elements.Form.editor.submitButtonLabel.label">
         <source>Submit label</source>
@@ -1288,7 +1294,7 @@
         <source>
 Your servers' maximum upload file size is {0}. Be aware setting higher values can result in errors when submitting the form.
 If you need higher values contact your administrator for help.
-                </source>
+        </source>
       </trans-unit>
       <trans-unit id="formEditor.elements.FileUpload.editor.allowedMimeTypes.doc">
         <source>Documents (doc)</source>
@@ -1310,6 +1316,12 @@ If you need higher values contact your administrator for help.
       </trans-unit>
       <trans-unit id="formEditor.elements.FileUpload.editor.allowedMimeTypes.ods">
         <source>Documents (ods)</source>
+      </trans-unit>
+      <trans-unit id="formEditor.elements.FileUpload.editor.multiple.label">
+        <source>Allow multiple upload</source>
+      </trans-unit>
+      <trans-unit id="formEditor.elements.FileUpload.editor.allowRemoval.label">
+        <source>Allow removal of uploaded files</source>
       </trans-unit>
       <trans-unit id="formEditor.elements.ImageUpload.label">
         <source>Image upload</source>

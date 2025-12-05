@@ -21,7 +21,7 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
-use TYPO3\CMS\Extbase\Validation\Validator\NotEmptyValidator;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Extbase\Validation\ValidatorResolver;
 use TYPO3\CMS\Form\Mvc\Property\TypeConverter\UploadedFileReferenceConverter;
 use TYPO3\CMS\Form\Mvc\Validation\MimeTypeValidator;
@@ -43,9 +43,9 @@ class FileUpload extends AbstractFormElement
 
         // Set the property mapping configuration for the file upload element.
         // * Add the UploadedFileReferenceConverter to convert an uploaded file to a
-        //   FileReference.
-        // * Add the MimeTypeValidator to the UploadedFileReferenceConverter to
-        //   delete non-valid file types directly.
+        //   FileReference (single upload) or ObjectStorage (multiple uploads).
+        // * Register the MimeTypeValidator in the ProcessingRule to validate
+        //   allowed file types.
         // * Setup the storage:
         //   If the property "saveToFileMount" exist for this element it will be used.
         //   If this file mount or the property "saveToFileMount" does not exist
@@ -59,30 +59,18 @@ class FileUpload extends AbstractFormElement
             ->setTypeConverter($typeConverter);
 
         $allowedMimeTypes = [];
-        $validators = [];
         if (isset($this->getProperties()['allowedMimeTypes']) && \is_array($this->getProperties()['allowedMimeTypes'])) {
             $allowedMimeTypes = array_filter($this->getProperties()['allowedMimeTypes']);
         }
         if (!empty($allowedMimeTypes)) {
             $validatorResolver = GeneralUtility::makeInstance(ValidatorResolver::class);
             $mimeTypeValidator = $validatorResolver->createValidator(MimeTypeValidator::class, ['allowedMimeTypes' => $allowedMimeTypes]);
-            $validators = [$mimeTypeValidator];
+            $this->getRootForm()
+                ->getProcessingRule($this->getIdentifier())
+                ->addValidator($mimeTypeValidator);
         }
 
-        $this->getRootForm()
-            ->getProcessingRule($this->getIdentifier())
-            ->filterValidators(
-                static function ($validator) use (&$validators) {
-                    if ($validator instanceof NotEmptyValidator) {
-                        return true;
-                    }
-                    $validators[] = $validator;
-                    return false;
-                }
-            );
-
         $uploadConfiguration = [
-            UploadedFileReferenceConverter::CONFIGURATION_FILE_VALIDATORS => $validators,
             UploadedFileReferenceConverter::CONFIGURATION_UPLOAD_CONFLICT_MODE => 'rename',
         ];
 

@@ -17,8 +17,10 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Form\Domain\Finishers;
 
+use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Resource\Folder;
-use TYPO3\CMS\Extbase\Domain\Model\FileReference;
+use TYPO3\CMS\Extbase\Domain\Model\FileReference as ExtbaseFileReference;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Form\Domain\Model\FormElements\FileUpload;
 
 /**
@@ -49,17 +51,39 @@ class DeleteUploadsFinisher extends AbstractFinisher
                 continue;
             }
 
-            if ($file instanceof FileReference) {
+            if ($file instanceof ExtbaseFileReference) {
                 $file = $file->getOriginalResource();
             }
+            if ($file instanceof FileReference) {
+                $this->deleteFileAndCollectFolder($file, $uploadFolders);
+            } elseif ($file instanceof ObjectStorage) {
+                foreach ($file as $singleFile) {
+                    if ($singleFile instanceof ExtbaseFileReference) {
+                        $singleFile = $singleFile->getOriginalResource();
+                    }
+                    if ($singleFile instanceof FileReference) {
+                        $this->deleteFileAndCollectFolder($singleFile, $uploadFolders);
+                    }
+                }
+            }
 
-            $folder = $file->getParentFolder();
-            $uploadFolders[$folder->getCombinedIdentifier()] = $folder;
-
-            $file->getStorage()->deleteFile($file->getOriginalFile());
         }
 
         $this->deleteEmptyUploadFolders($uploadFolders);
+    }
+
+    /**
+     * Deletes the file and collects its parent folder for later cleanup.
+     *
+     * @param array<string, Folder> $uploadFolders
+     */
+    private function deleteFileAndCollectFolder(FileReference $file, array &$uploadFolders): void
+    {
+        $folder = $file->getParentFolder();
+        if ($folder instanceof Folder) {
+            $uploadFolders[$folder->getCombinedIdentifier()] = $folder;
+        }
+        $file->getStorage()->deleteFile($file->getOriginalFile());
     }
 
     /**

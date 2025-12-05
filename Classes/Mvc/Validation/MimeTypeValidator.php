@@ -29,7 +29,7 @@ use TYPO3\CMS\Form\Mvc\Validation\Exception\InvalidValidationOptionsException;
  *
  * Scope: frontend
  */
-final class MimeTypeValidator extends AbstractValidator
+final class MimeTypeValidator extends AbstractValidator implements ObjectStorageElementValidatorInterface
 {
     /**
      * @var array

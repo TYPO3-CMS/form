@@ -35,4 +35,45 @@ final class UploadedResourceViewHelperTest extends FunctionalTestCase
         $context->getTemplatePaths()->setTemplateSource('<formvh:form.uploadedResource accept="{0: \'image/jpeg\', 1: \'image/png\'}"/>');
         self::assertSame('<input accept="image/jpeg,image/png" type="file" name="" />', (new TemplateView($context))->render());
     }
+
+    #[Test]
+    public function multipleAttributeIsNotAddedByDefault(): void
+    {
+        $context = $this->get(RenderingContextFactory::class)->create();
+        $context->getTemplatePaths()->setTemplateSource('<formvh:form.uploadedResource />');
+        $result = (new TemplateView($context))->render();
+        self::assertStringNotContainsString('multiple', $result);
+        self::assertSame('<input type="file" name="" />', $result);
+    }
+
+    #[Test]
+    public function multipleAttributeIsAddedWhenSetToTrue(): void
+    {
+        $context = $this->get(RenderingContextFactory::class)->create();
+        $context->getTemplatePaths()->setTemplateSource('<formvh:form.uploadedResource multiple="true" />');
+        $result = (new TemplateView($context))->render();
+        self::assertStringContainsString('multiple="multiple"', $result);
+        self::assertStringContainsString('name="[]"', $result);
+    }
+
+    #[Test]
+    public function multipleAttributeIsNotAddedWhenSetToFalse(): void
+    {
+        $context = $this->get(RenderingContextFactory::class)->create();
+        $context->getTemplatePaths()->setTemplateSource('<formvh:form.uploadedResource multiple="false" />');
+        $result = (new TemplateView($context))->render();
+        self::assertStringNotContainsString('multiple', $result);
+        self::assertSame('<input type="file" name="" />', $result);
+    }
+
+    #[Test]
+    public function multipleAndAcceptAttributesCanBeCombined(): void
+    {
+        $context = $this->get(RenderingContextFactory::class)->create();
+        $context->getTemplatePaths()->setTemplateSource('<formvh:form.uploadedResource accept="{0: \'application/pdf\'}" multiple="true" />');
+        $result = (new TemplateView($context))->render();
+        self::assertStringContainsString('accept="application/pdf"', $result);
+        self::assertStringContainsString('multiple="multiple"', $result);
+        self::assertStringContainsString('name="[]"', $result);
+    }
 }

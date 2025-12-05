@@ -25,6 +25,7 @@ use TYPO3\CMS\Core\Country\CountryProvider;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use TYPO3\CMS\Form\Domain\Model\FormElements\FormElementInterface;
 use TYPO3\CMS\Form\Domain\Model\FormElements\StringableFormElementInterface;
@@ -116,6 +117,13 @@ final class RenderFormValueViewHelper extends AbstractViewHelper
                 return self::mapValuesToOptions($value, $options);
             }
             return self::mapValueToOption($value, $options);
+        }
+        if ($value instanceof ObjectStorage) {
+            $result = [];
+            foreach ($value as $item) {
+                $result[] = is_object($item) ? self::processObject($element, $item) : $item;
+            }
+            return $result;
         }
         if (is_object($value)) {
             return self::processObject($element, $value);

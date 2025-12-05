@@ -26,6 +26,7 @@ enum HashScope: string
     case FormState = '__state';
     case FormSession = '__session';
     case ResourcePointer = 'resourcePointer';
+    case DeleteFile = '__deleteFile';
 
     /**
      * @return non-empty-string

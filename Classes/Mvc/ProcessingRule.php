@@ -20,11 +20,13 @@ namespace TYPO3\CMS\Form\Mvc;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Error\Result;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Extbase\Property\PropertyMapper;
 use TYPO3\CMS\Extbase\Property\PropertyMappingConfiguration;
 use TYPO3\CMS\Extbase\Validation\Validator\ConjunctionValidator;
 use TYPO3\CMS\Extbase\Validation\Validator\ValidatorInterface;
 use TYPO3\CMS\Extbase\Validation\ValidatorResolver;
+use TYPO3\CMS\Form\Mvc\Validation\ObjectStorageElementValidatorInterface;
 
 /**
  * A processing Rule contains information for property mapping and validation.
@@ -158,8 +160,22 @@ class ProcessingRule
             $messages = GeneralUtility::makeInstance(Result::class);
         }
 
-        $validationResult = $this->validator->validate($value);
-        $messages->merge($validationResult);
+        // For multi-value fields (e.g. multi-file uploads) the converted value
+        // is an ObjectStorage. By default, validators receive the whole collection
+        // (backwards compatible). Validators implementing ObjectStorageElementValidatorInterface
+        // (e.g. MimeTypeValidator, FileSizeValidator) are called once per element instead.
+        if ($value instanceof ObjectStorage) {
+            foreach ($this->getValidators() as $validator) {
+                $targets = $validator instanceof ObjectStorageElementValidatorInterface
+                    ? iterator_to_array($value)
+                    : [$value];
+                foreach ($targets as $target) {
+                    $messages->merge($validator->validate($target));
+                }
+            }
+        } else {
+            $messages->merge($this->validator->validate($value));
+        }
 
         $this->processingMessages->merge($messages);
         return $value;
