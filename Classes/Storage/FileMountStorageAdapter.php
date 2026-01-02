@@ -17,8 +17,6 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Form\Storage;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Resource\Exception\FolderDoesNotExistException;
 use TYPO3\CMS\Core\Resource\Exception\InsufficientFolderAccessPermissionsException;
 use TYPO3\CMS\Core\Resource\File;
@@ -33,6 +31,7 @@ use TYPO3\CMS\Form\Domain\Configuration\PersistenceConfigurationService;
 use TYPO3\CMS\Form\Domain\DTO\FormData;
 use TYPO3\CMS\Form\Domain\DTO\FormMetadata;
 use TYPO3\CMS\Form\Domain\DTO\SearchCriteria;
+use TYPO3\CMS\Form\Domain\DTO\StorageContext;
 use TYPO3\CMS\Form\Domain\ValueObject\FormIdentifier;
 use TYPO3\CMS\Form\Mvc\Configuration\Exception\NoSuchFileException;
 use TYPO3\CMS\Form\Mvc\Configuration\YamlSource;
@@ -43,28 +42,77 @@ use TYPO3\CMS\Form\Slot\FilePersistenceSlot;
  * Storage adapter for filemount-based form persistence
  *
  * @internal
+ * @deprecated since v14.2, will be removed in v15.0. Use database storage instead.
+ *             See Deprecation-108653-FormFileBasedStorageAdapter.rst
  */
 class FileMountStorageAdapter extends AbstractFileStorageAdapter implements StorageAdapterInterface
 {
+    private static bool $deprecationTriggered = false;
+
     public function __construct(
         protected readonly YamlSource $yamlSource,
         protected readonly ResourceFactory $resourceFactory,
         protected readonly PersistenceConfigurationService $storageConfiguration,
         protected readonly FilePersistenceSlot $filePersistenceSlot,
-        #[Autowire(service: 'cache.runtime')]
-        protected readonly FrontendInterface $runtimeCache,
     ) {}
+
+    private function triggerDeprecation(): void
+    {
+        if (!self::$deprecationTriggered) {
+            self::$deprecationTriggered = true;
+            trigger_error(
+                'File-based form storage (FileMountStorageAdapter) is deprecated since TYPO3 v14.2 and will be removed in v15.0.'
+                . ' Use the upgrade wizard "Migrate file-based forms to database storage" to migrate. See Deprecation-108653.',
+                E_USER_DEPRECATED
+            );
+        }
+    }
+
+    public function getTypeIdentifier(): string
+    {
+        return 'filemount';
+    }
+
+    public function supports(string $identifier): bool
+    {
+        // File mount identifiers follow the pattern: "storageUid:/path/to/file"
+        // Examples: "1:/forms/contact.form.yaml", "2:/user_forms/survey.form.yaml"
+        return $this->pathIsIntendedAsFileMountPath($identifier);
+    }
+
+    public function getPriority(): int
+    {
+        // Normal priority - fallback for non-extension paths
+        return 50;
+    }
+
+    public function getLabel(): string
+    {
+        return 'formManager.storage.fileMount.label';
+    }
+
+    public function getDescription(): string
+    {
+        return 'formManager.storage.fileMount.description';
+    }
+
+    public function getIconIdentifier(): string
+    {
+        return 'mimetypes-x-sys_filemounts';
+    }
 
     public function read(FormIdentifier $identifier): FormData
     {
+        $this->triggerDeprecation();
         $file = $this->retrieveFileByPersistenceIdentifier($identifier->identifier);
         $formDefinition = $this->yamlSource->load([$file]);
         $this->generateErrorsIfFormDefinitionIsValidButHasInvalidFileExtension($formDefinition, $identifier->identifier);
         return FormData::fromArray($formDefinition);
     }
 
-    public function write(FormIdentifier $identifier, FormData $data): void
+    public function write(FormIdentifier $identifier, FormData $data, ?StorageContext $context = null): FormIdentifier
     {
+        $this->triggerDeprecation();
         if (!$this->hasValidFileExtension($identifier->identifier)) {
             throw new PersistenceManagerException(sprintf('The file "%s" could not be saved.', $identifier->identifier), 1477679820);
         }
@@ -80,6 +128,7 @@ class FileMountStorageAdapter extends AbstractFileStorageAdapter implements Stor
                 $e
             );
         }
+        return $identifier;
     }
 
     public function delete(FormIdentifier $identifier): void
@@ -102,12 +151,23 @@ class FileMountStorageAdapter extends AbstractFileStorageAdapter implements Stor
     public function exists(FormIdentifier $identifier): bool
     {
         $exists = false;
-        if ($this->hasValidFileExtension($identifier->identifier)) {
+        if ($this->hasValidFileExtension($identifier->identifier) && $this->pathIsIntendedAsFileMountPath($identifier->identifier)) {
             [$storageUid, $fileIdentifier] = explode(':', $identifier->identifier, 2);
             $storage = $this->getStorageByUid((int)$storageUid);
             $exists = $storage->hasFile($fileIdentifier);
         }
         return $exists;
+    }
+
+    public function existsByFormIdentifier(string $formIdentifier): bool
+    {
+        foreach ($this->retrieveYamlFilesFromStorageFolders() as $file) {
+            $formMetadata = $this->loadMetaData($file);
+            if ($this->looksLikeAFormDefinition($formMetadata) && $formMetadata->identifier === $formIdentifier) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function findAll(SearchCriteria $criteria): array
@@ -200,24 +260,22 @@ class FileMountStorageAdapter extends AbstractFileStorageAdapter implements Stor
      * form setup "persistenceManager.allowedExtensionPaths" or persistenceManager.allowedFileMounts".
      * If the input is a persistence identifier an additional check for a valid file extension is performed.
      */
-    public function isAllowedPersistencePath(string $persistencePath): bool
+    public function isAllowedStorageLocation(string $storageLocation): bool
     {
-        $pathinfo = PathUtility::pathinfo($persistencePath);
-        $persistencePathIsFile = isset($pathinfo['extension']);
-        if ($persistencePathIsFile
-            && $this->pathIsIntendedAsFileMountPath($persistencePath)
-            && $this->hasValidFileExtension($persistencePath)
-            && $this->isFileWithinAccessibleFormStorageFolders($persistencePath)
-        ) {
-            return true;
-        }
-        if (!$persistencePathIsFile
-            && $this->pathIsIntendedAsFileMountPath($persistencePath)
-            && $this->isAccessibleFormStorageFolder($persistencePath)
-        ) {
-            return true;
-        }
-        return false;
+        // For file storage, storageLocation is a folder path
+        return $this->pathIsIntendedAsFileMountPath($storageLocation)
+            && $this->isAccessibleFormStorageFolder($storageLocation);
+    }
+
+    /**
+     * Check if a persistence identifier (full file path) is allowed
+     */
+    public function isAllowedPersistenceIdentifier(string $persistenceIdentifier): bool
+    {
+        // For file storage, persistence identifier is a full file path
+        return $this->pathIsIntendedAsFileMountPath($persistenceIdentifier)
+            && $this->hasValidFileExtension($persistenceIdentifier)
+            && $this->isFileWithinAccessibleFormStorageFolders($persistenceIdentifier);
     }
 
     /**
@@ -288,7 +346,7 @@ class FileMountStorageAdapter extends AbstractFileStorageAdapter implements Stor
                 $yaml,
                 $persistenceIdentifier,
                 $file->getUid()
-            );
+            )->withStorageLocation($this->buildStorageLocationLabel($persistenceIdentifier));
         } catch (\Exception $e) {
             return FormMetadata::createInvalid($persistenceIdentifier, $e->getMessage());
         }
@@ -379,21 +437,44 @@ class FileMountStorageAdapter extends AbstractFileStorageAdapter implements Stor
         return $file;
     }
 
-    public function getTypeIdentifier(): string
+    public function getFormManagerOptions(): array
     {
-        return 'filemount';
+        $preparedAccessibleFormStorageFolders = [];
+        foreach ($this->getAccessibleFormStorageFolders() as $identifier => $folder) {
+            $preparedAccessibleFormStorageFolders[] = [
+                'label' => $folder->getStorage()->isPublic() ? $folder->getPublicUrl() : $identifier,
+                'value' => $identifier,
+            ];
+        }
+        return [
+            'allowedStorageLocations' => $preparedAccessibleFormStorageFolders,
+        ];
     }
 
-    public function supports(string $identifier): bool
+    public function isAccessible(): bool
     {
-        // File mount identifiers follow the pattern: "storageUid:/path/to/file"
-        // Examples: "1:/forms/contact.form.yaml", "2:/user_forms/survey.form.yaml"
-        return $this->pathIsIntendedAsFileMountPath($identifier);
+        $accessible = !empty($this->getAccessibleFormStorageFolders());
+        if ($accessible) {
+            $this->triggerDeprecation();
+        }
+        return $accessible;
     }
 
-    public function getPriority(): int
+    /**
+     * Build a user-friendly storage location label
+     * Format: "StorageName/path/to/folder/file.form.yaml"
+     */
+    protected function buildStorageLocationLabel(string $persistenceIdentifier): string
     {
-        // Normal priority - fallback for non-extension paths
-        return 50;
+        [$storageUid, $pathIdentifier] = explode(':', $persistenceIdentifier, 2);
+        $storage = $this->storageRepository->findByUid((int)$storageUid);
+
+        if ($storage === null) {
+            return $storageUid . $pathIdentifier;
+        }
+
+        $storageName = $storage->getName();
+
+        return $storageName . $pathIdentifier;
     }
 }

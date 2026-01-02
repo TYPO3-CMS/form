@@ -25,6 +25,7 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
+use TYPO3\CMS\Form\Domain\Repository\FormDefinitionRepository;
 
 /**
  * This class is subjected to change.
@@ -70,6 +71,11 @@ class DatabaseService
             // we expect no false entries even with "weird" string notations. If sys_refindex
             // has it, we yield it.
             $useStringReference = true;
+        } elseif (MathUtility::canBeInterpretedAsInteger($persistenceIdentifier)) {
+            $constraints[] = $queryBuilder->expr()->or(
+                $queryBuilder->expr()->eq('ref_string', $queryBuilder->createNamedParameter($persistenceIdentifier)),
+                $queryBuilder->expr()->eq('ref_uid', $queryBuilder->createNamedParameter($persistenceIdentifier, Connection::PARAM_INT))
+            );
         } else {
             // Anything else would be either a notation like "/fileadmin/something.form.yaml"
             // or a numeric identifier for a sys_file.
@@ -85,12 +91,7 @@ class DatabaseService
                     // The associated identifier could (no longer) be retrieved via FAL.
                     // However, we do want to see existing entries to such stale entries to
                     // be able to reveal bad references, either by its ref_string or ref_uid
-
-                    if (MathUtility::canBeInterpretedAsInteger($persistenceIdentifier)) {
-                        $constraints[] = $queryBuilder->expr()->eq('ref_uid', $queryBuilder->createNamedParameter($persistenceIdentifier, Connection::PARAM_INT));
-                    } else {
-                        $useStringReference = true;
-                    }
+                    $useStringReference = true;
                 } elseif ($file instanceof File) {
                     // We succeeded in retrieving the FAL file object.
                     $constraints[] = $queryBuilder->expr()->eq('ref_uid', $queryBuilder->createNamedParameter($file->getUid(), Connection::PARAM_INT));
@@ -149,6 +150,39 @@ class DatabaseService
         $items = [];
         foreach ($this->getAllReferences('ref_uid') as $item) {
             $items[$item['identifier']] = $item['items'];
+        }
+        return $items;
+    }
+
+    /**
+     * Returns an array with all database-stored form definition UIDs as keys
+     * and their reference counts as values.
+     *
+     * These are tracked in sys_refindex via ref_table='form_definition' and ref_uid=<form_definition UID>.
+     *
+     * @return array<string, int> persistenceIdentifier (UID as string) => reference count
+     * @internal
+     */
+    public function getAllReferencesForFormDefinitionUid(): array
+    {
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_refindex');
+
+        $rows = $queryBuilder
+            ->select('ref_uid AS identifier')
+            ->addSelectLiteral('COUNT(' . $queryBuilder->quoteIdentifier('ref_uid') . ') AS ' . $queryBuilder->quoteIdentifier('items'))
+            ->from('sys_refindex')
+            ->where(
+                $queryBuilder->expr()->eq('softref_key', $queryBuilder->createNamedParameter('formPersistenceIdentifier')),
+                $queryBuilder->expr()->eq('ref_table', $queryBuilder->createNamedParameter(FormDefinitionRepository::TABLE_NAME)),
+                $queryBuilder->expr()->gt('ref_uid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+            )
+            ->groupBy('ref_uid')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $items = [];
+        foreach ($rows as $row) {
+            $items[(string)$row['identifier']] = (int)$row['items'];
         }
         return $items;
     }

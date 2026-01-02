@@ -22,9 +22,8 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Form\Mvc\Persistence;
 
 use Psr\Http\Message\ServerRequestInterface;
-use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Form\Domain\DTO\SearchCriteria;
-use TYPO3\CMS\Form\Mvc\Persistence\Exception\PersistenceManagerException;
+use TYPO3\CMS\Form\Domain\ValueObject\FormIdentifier;
 
 /**
  * The form persistence manager interface
@@ -48,15 +47,11 @@ interface FormPersistenceManagerInterface
 
     /**
      * Save the array form representation identified by $persistenceIdentifier
-     *
-     * @throws PersistenceManagerException
      */
-    public function save(string $persistenceIdentifier, array $formDefinition, array $formSettings);
+    public function save(string $persistenceIdentifier, array $formDefinition, array $formSettings, ?string $storageLocation = null): FormIdentifier;
 
     /**
      * Delete the form representation identified by $persistenceIdentifier
-     *
-     * @throws PersistenceManagerException
      */
     public function delete(string $persistenceIdentifier, array $formSettings): void;
 
@@ -77,25 +72,29 @@ interface FormPersistenceManagerInterface
     public function hasForms(array $formSettings): bool;
 
     /**
-     * Return a list of all accessible file mount points
-     *
-     * @return Folder[]
-     */
-    public function getAccessibleFormStorageFolders(array $formSettings): array;
-
-    /**
-     * Return a list of all accessible extension folders
-     */
-    public function getAccessibleExtensionFolders(array $formSettings): array;
-
-    /**
      * This takes a form identifier and returns a unique persistence identifier for it.
      */
-    public function getUniquePersistenceIdentifier(string $formIdentifier, string $savePath, array $formSettings): string;
+    public function getUniquePersistenceIdentifier(string $storage, string $formIdentifier, ?string $savePath): string;
 
-    public function getUniqueIdentifier(array $formSettings, string $identifier): string;
+    public function getUniqueIdentifier(string $identifier): string;
 
-    public function isAllowedPersistencePath(string $persistencePath, array $formSettings): bool;
+    /**
+     * Check if a storage location (PID for database, folder path for files) is allowed
+     *
+     * @param string $storageLocation The storage location (e.g., "123" for PID, "1:/forms/" for file path)
+     * @return bool True if the storageLocation is allowed
+     */
+    public function isAllowedStorageLocation(string $storageLocation): bool;
+
+    /**
+     * Check if a persistence identifier (UID for database, full file path for files) is allowed
+     *
+     * @param string $persistenceIdentifier The persistence identifier (e.g., "456" for UID, "1:/forms/contact.form.yaml" for file)
+     * @return bool True if the persistence identifier is allowed
+     */
+    public function isAllowedPersistenceIdentifier(string $persistenceIdentifier): bool;
 
     public function hasValidFileExtension(string $fileName): bool;
+
+    public function getAccessibleStorageAdapters(): array;
 }

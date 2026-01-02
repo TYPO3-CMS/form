@@ -26,6 +26,7 @@ use TYPO3\CMS\Form\Domain\Configuration\PersistenceConfigurationService;
 use TYPO3\CMS\Form\Domain\DTO\FormData;
 use TYPO3\CMS\Form\Domain\DTO\FormMetadata;
 use TYPO3\CMS\Form\Domain\DTO\SearchCriteria;
+use TYPO3\CMS\Form\Domain\DTO\StorageContext;
 use TYPO3\CMS\Form\Domain\ValueObject\FormIdentifier;
 use TYPO3\CMS\Form\Mvc\Configuration\Exception\NoSuchFileException;
 use TYPO3\CMS\Form\Mvc\Configuration\YamlSource;
@@ -46,6 +47,37 @@ class ExtensionStorageAdapter extends AbstractFileStorageAdapter implements Stor
         protected readonly FrontendInterface $runtimeCache,
     ) {}
 
+    public function getTypeIdentifier(): string
+    {
+        return 'extension';
+    }
+
+    public function supports(string $identifier): bool
+    {
+        return PathUtility::isExtensionPath($identifier);
+    }
+
+    public function getPriority(): int
+    {
+        // High priority - extension paths should be checked early
+        return 75;
+    }
+
+    public function getLabel(): string
+    {
+        return 'formManager.storage.extension.label';
+    }
+
+    public function getDescription(): string
+    {
+        return 'formManager.storage.extension.description';
+    }
+
+    public function getIconIdentifier(): string
+    {
+        return 'content-extension';
+    }
+
     public function read(FormIdentifier $identifier): FormData
     {
         $this->ensureValidPersistenceIdentifier($identifier->identifier);
@@ -55,7 +87,7 @@ class ExtensionStorageAdapter extends AbstractFileStorageAdapter implements Stor
         return FormData::fromArray($formDefinition);
     }
 
-    public function write(FormIdentifier $identifier, FormData $data): void
+    public function write(FormIdentifier $identifier, FormData $data, ?StorageContext $context = null): FormIdentifier
     {
         if (!$this->hasValidFileExtension($identifier->identifier)) {
             throw new PersistenceManagerException(sprintf('The file "%s" could not be saved.', $identifier->identifier), 1764879569);
@@ -81,6 +113,7 @@ class ExtensionStorageAdapter extends AbstractFileStorageAdapter implements Stor
                 $e
             );
         }
+        return $identifier;
     }
 
     public function delete(FormIdentifier $identifier): void
@@ -111,6 +144,17 @@ class ExtensionStorageAdapter extends AbstractFileStorageAdapter implements Stor
             }
         }
         return $exists;
+    }
+
+    public function existsByFormIdentifier(string $formIdentifier): bool
+    {
+        foreach ($this->retrieveYamlFilesFromExtensionFolders() as $identifier) {
+            $formMetadata = $this->loadMetaData($identifier);
+            if ($this->looksLikeAFormDefinition($formMetadata) && $formMetadata->identifier === $formIdentifier) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function findAll(SearchCriteria $criteria): array
@@ -221,26 +265,10 @@ class ExtensionStorageAdapter extends AbstractFileStorageAdapter implements Stor
             return FormMetadata::createFromYaml(
                 $yaml,
                 $persistenceIdentifier,
-            );
+            )->withStorageLocation($this->buildStorageLocationLabel($persistenceIdentifier));
         } catch (\Exception $e) {
             return FormMetadata::createInvalid($persistenceIdentifier, $e->getMessage());
         }
-    }
-
-    public function getTypeIdentifier(): string
-    {
-        return 'extension';
-    }
-
-    public function supports(string $identifier): bool
-    {
-        return PathUtility::isExtensionPath($identifier);
-    }
-
-    public function getPriority(): int
-    {
-        // High priority - extension paths should be checked first
-        return 100;
     }
 
     protected function isAccessibleExtensionFolder(string $folderName): bool
@@ -275,25 +303,51 @@ class ExtensionStorageAdapter extends AbstractFileStorageAdapter implements Stor
     }
 
     /**
-     * Check if a persistence path or if a persistence identifier path is configured within the
-     * form setup "persistenceManager.allowedExtensionPaths"
-     * If the input is a persistence identifier an additional check for a valid file extension is performed.
+     * Check if a storage location (extension folder) is allowed
      */
-    public function isAllowedPersistencePath(string $persistencePath): bool
+    public function isAllowedStorageLocation(string $storageLocation): bool
     {
-        $pathinfo = PathUtility::pathinfo($persistencePath);
-        $persistencePathIsFile = isset($pathinfo['extension']);
-        if ($persistencePathIsFile
-            && $this->hasValidFileExtension($persistencePath)
-            && $this->isFileWithinAccessibleExtensionFolders($persistencePath)
-        ) {
-            return true;
+        // For extension storage, storageLocation is a folder path within allowed extensions
+        return $this->isAccessibleExtensionFolder($storageLocation);
+    }
+
+    /**
+     * Check if a persistence identifier (full file path) is allowed
+     */
+    public function isAllowedPersistenceIdentifier(string $persistenceIdentifier): bool
+    {
+        // For extension storage, persistence identifier is a full file path (EXT:...)
+        return $this->hasValidFileExtension($persistenceIdentifier)
+            && $this->isFileWithinAccessibleExtensionFolders($persistenceIdentifier);
+    }
+
+    public function getFormManagerOptions(): array
+    {
+        $preparedAccessibleFormStorageFolders = [];
+        if ($this->storageConfiguration->isAllowedToSaveToExtensionPaths()) {
+            foreach ($this->getAccessibleExtensionFolders() as $relativePath => $fullPath) {
+                $preparedAccessibleFormStorageFolders[] = [
+                    'label' => $relativePath,
+                    'value' => $relativePath,
+                ];
+            }
         }
-        if (!$persistencePathIsFile
-            && $this->isAccessibleExtensionFolder($persistencePath)
-        ) {
-            return true;
-        }
-        return false;
+        return [
+            'allowedStorageLocations' => $preparedAccessibleFormStorageFolders,
+        ];
+    }
+
+    public function isAccessible(): bool
+    {
+        return $this->storageConfiguration->isAllowedToSaveToExtensionPaths() && !empty($this->getAccessibleExtensionFolders());
+    }
+
+    /**
+     * Build a user-friendly storage location label
+     * Format: "extension_key/Configuration/Forms/file.form.yaml"
+     */
+    protected function buildStorageLocationLabel(string $persistenceIdentifier): string
+    {
+        return $persistenceIdentifier;
     }
 }

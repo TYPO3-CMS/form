@@ -29,9 +29,6 @@ use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
-use TYPO3\CMS\Core\Utility\PathUtility;
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface as ExtbaseConfigurationManagerInterface;
-use TYPO3\CMS\Form\Mvc\Configuration\ConfigurationManagerInterface as ExtFormConfigurationManagerInterface;
 use TYPO3\CMS\Form\Mvc\Configuration\Exception\NoSuchFileException;
 use TYPO3\CMS\Form\Mvc\Configuration\Exception\ParseErrorException;
 use TYPO3\CMS\Form\Mvc\Persistence\Exception\PersistenceManagerException;
@@ -49,8 +46,6 @@ class FormPagePreviewRenderer extends StandardContentPreviewRenderer implements 
     public function __construct(
         protected readonly FormPersistenceManagerInterface $formPersistenceManager,
         protected readonly FlashMessageService $flashMessageService,
-        protected readonly ExtbaseConfigurationManagerInterface $extbaseConfigurationManager,
-        protected readonly ExtFormConfigurationManagerInterface $extFormConfigurationManager,
         protected ?RecordFieldPreviewProcessor $fieldProcessor,
         protected ?TcaSchemaFactory $tcaSchemaFactory,
         protected ?LocalizationRepository $localizationRepository,
@@ -83,22 +78,8 @@ class FormPagePreviewRenderer extends StandardContentPreviewRenderer implements 
         if (!empty($persistenceIdentifier)) {
             try {
                 try {
-                    if ($this->formPersistenceManager->hasValidFileExtension($persistenceIdentifier) || PathUtility::isExtensionPath($persistenceIdentifier)) {
-                        // The ConfigurationManager of ext:form needs ext:extbase ConfigurationManager to retrieve basic TS
-                        // settings (for "module.tx_form" allowed form storages). ConfigurationManager of extbase should *usually*
-                        // only be called in extbase context and needs a Request, which is usually set by extbase bootstrap.
-                        // We are however not in extbase context here.
-                        // To prevent a fallback of extbase ConfigurationManager to $GLOBALS['TYPO3_REQUEST'], we set
-                        // the request explicitly here, to then fetch $formSettings from ext:form ConfigurationManager.
-                        $this->extbaseConfigurationManager->setRequest($request);
-                        $formDefinition = $this->formPersistenceManager->load($persistenceIdentifier);
-                        $formLabel = $formDefinition['label'];
-                    } else {
-                        $formLabel = sprintf(
-                            $languageService->sL(self::L10N_PREFIX . 'tt_content.preview.inaccessiblePersistenceIdentifier'),
-                            $persistenceIdentifier
-                        );
-                    }
+                    $formDefinition = $this->formPersistenceManager->load($persistenceIdentifier);
+                    $formLabel = $formDefinition['label'];
                 } catch (ParseErrorException $e) {
                     $formLabel = sprintf(
                         $languageService->sL(self::L10N_PREFIX . 'tt_content.preview.invalidPersistenceIdentifier'),

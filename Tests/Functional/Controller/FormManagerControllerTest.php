@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Form\Tests\Functional\Controller;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Routing\Route as SymfonyRoute;
@@ -31,8 +32,6 @@ use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Page\PageRenderer;
-use TYPO3\CMS\Core\Resource\Folder;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Extbase\Core\Bootstrap;
 use TYPO3\CMS\Extbase\Mvc\ExtbaseRequestParameters;
 use TYPO3\CMS\Extbase\Mvc\Request;
@@ -67,9 +66,20 @@ final class FormManagerControllerTest extends FunctionalTestCase
     ];
 
     #[Test]
-    public function getAccessibleFormStorageFoldersReturnsProcessedArray(): void
+    public function getFormManagerAppInitialDataReturnsProcessedArray(): void
     {
+        $translationServiceMock = $this->createMock(TranslationService::class);
+        $translationServiceMock->method('translateValuesRecursive')->willReturnArgument(0);
         $formPersistenceManagerMock = $this->createMock(FormPersistenceManagerInterface::class);
+        $formPersistenceManagerMock->method('getAccessibleStorageAdapters')->willReturn([
+            [
+                'typeIdentifier' => 'filemount',
+                'label' => 'File Storage',
+                'description' => 'Store forms in file system',
+                'iconIdentifier' => 'content-form',
+                'options' => [],
+            ],
+        ]);
         $subjectMock = $this->getAccessibleMock(
             FormManagerController::class,
             null,
@@ -79,73 +89,6 @@ final class FormManagerControllerTest extends FunctionalTestCase
                 $this->createMock(IconFactory::class),
                 $this->createMock(DatabaseService::class),
                 $formPersistenceManagerMock,
-                $this->createMock(ExtFormConfigurationManagerInterface::class),
-                $this->createMock(TranslationService::class),
-                $this->createMock(CharsetConverter::class),
-                $this->createMock(CoreUriBuilder::class),
-                $this->createMock(YamlSource::class),
-                $this->createMock(ComponentFactory::class),
-            ],
-        );
-
-        $storageMock1 = $this->createMock(ResourceStorage::class);
-        $storageMock2 = $this->createMock(ResourceStorage::class);
-
-        $storageMock1->method('isPublic')->willReturn(true);
-        $storageMock2->method('isPublic')->willReturn(false);
-
-        $folder1Mock = $this->createMock(Folder::class);
-        $folder1Mock->method('getPublicUrl')->willReturn('/fileadmin/user_upload/');
-        $folder1Mock->method('getStorage')->willReturn($storageMock1);
-
-        $folder2Mock = $this->createMock(Folder::class);
-        $folder2Mock->method('getStorage')->willReturn($storageMock2);
-
-        $formPersistenceManagerMock->method('getAccessibleFormStorageFolders')->willReturn([
-            '1:/user_upload/' => $folder1Mock,
-            '2:/forms/' => $folder2Mock,
-        ]);
-        $formPersistenceManagerMock->method('getAccessibleExtensionFolders')->willReturn([
-            'EXT:form/Resources/Forms/' => '/some/path/form/Resources/Forms/',
-            'EXT:form_additions/Resources/Forms/' => '/some/path/form_additions/Resources/Forms/',
-        ]);
-
-        $expected = [
-            0 => [
-                'label' => '/fileadmin/user_upload/',
-                'value' => '1:/user_upload/',
-            ],
-            1 => [
-                'label' => '2:/forms/',
-                'value' => '2:/forms/',
-            ],
-            2 => [
-                'label' => 'EXT:form/Resources/Forms/',
-                'value' => 'EXT:form/Resources/Forms/',
-            ],
-            3 => [
-                'label' => 'EXT:form_additions/Resources/Forms/',
-                'value' => 'EXT:form_additions/Resources/Forms/',
-            ],
-        ];
-
-        self::assertSame($expected, $subjectMock->_call('getAccessibleFormStorageFolders', [], true));
-    }
-
-    #[Test]
-    public function getFormManagerAppInitialDataReturnsProcessedArray(): void
-    {
-        $translationServiceMock = $this->createMock(TranslationService::class);
-        $translationServiceMock->method('translateValuesRecursive')->willReturnArgument(0);
-        $subjectMock = $this->getAccessibleMock(
-            FormManagerController::class,
-            ['getAccessibleFormStorageFolders'],
-            [
-                $this->get(ModuleTemplateFactory::class),
-                $this->createMock(PageRenderer::class),
-                $this->createMock(IconFactory::class),
-                $this->createMock(DatabaseService::class),
-                $this->createMock(FormPersistenceManagerInterface::class),
                 $this->createMock(ExtFormConfigurationManagerInterface::class),
                 $translationServiceMock,
                 $this->createMock(CharsetConverter::class),
@@ -159,26 +102,22 @@ final class FormManagerControllerTest extends FunctionalTestCase
         $mockUriBuilder->method('uriFor')->willReturn('/typo3/index.php?some=param');
         $subjectMock->_set('uriBuilder', $mockUriBuilder);
 
-        $subjectMock->method('getAccessibleFormStorageFolders')
-            ->willReturn([
-                0 => [
-                    'label' => 'user_upload',
-                    'value' => '1:/user_upload/',
-                ],
-            ]);
         $expected = [
             'selectablePrototypesConfiguration' => [],
-            'accessibleFormStorageFolders' => [
-                0 => [
-                    'label' => 'user_upload',
-                    'value' => '1:/user_upload/',
-                ],
-            ],
             'endpoints' => [
                 'create' => '/typo3/index.php?some=param',
                 'duplicate' => '/typo3/index.php?some=param',
                 'delete' => '/typo3/index.php?some=param',
                 'references' => '/typo3/index.php?some=param',
+            ],
+            'accessibleStorageAdapters' => [
+                0 => [
+                    'typeIdentifier' => 'filemount',
+                    'label' => 'File Storage',
+                    'description' => 'Store forms in file system',
+                    'iconIdentifier' => 'content-form',
+                    'options' => [],
+                ],
             ],
         ];
         $result = $subjectMock->_call(
@@ -217,8 +156,8 @@ final class FormManagerControllerTest extends FunctionalTestCase
         $formMetadata = new FormMetadata(
             identifier: 'ext-form-identifier',
             type: 'Form',
-            prototypeName: 'Standard',
             name: 'some name',
+            prototypeName: 'Standard',
             persistenceIdentifier: '1:/user_uploads/someFormName.yaml',
             readOnly: false,
             removable: true,
@@ -505,9 +444,9 @@ final class FormManagerControllerTest extends FunctionalTestCase
     }
 
     #[Test]
+    #[IgnoreDeprecations] // Default FormSetup.yaml configures allowedFileMounts which triggers deprecation on bootstrap
     public function beforeFormIsCreatedEventIsTriggered(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
         $this->setUpBackendUser(1);
 
@@ -522,7 +461,7 @@ final class FormManagerControllerTest extends FunctionalTestCase
         $container->set(
             'before-form-create-listener',
             static function (BeforeFormIsCreatedEvent $event) use (&$state) {
-                $event->formPersistenceIdentifier = '1:/form_definitions/new_form.form.yaml';
+                $event->formPersistenceIdentifier = 'NEW_from_listener';
                 $event->form['label'] = 'bar';
                 $state['before-form-create-listener'] = $event;
             }
@@ -538,7 +477,8 @@ final class FormManagerControllerTest extends FunctionalTestCase
             'formName' => 'test',
             'templatePath' => 'EXT:form/Resources/Private/Backend/Templates/FormEditor/Yaml/NewForms/BlankForm.yaml',
             'prototypeName' => 'standard',
-            'savePath' => '1:/form_definitions/',
+            'storage' => 'database',
+            'storageLocation' => '0',
         ];
         $serverRequest = $serverRequest->withParsedBody($parsedBody);
         $request = (new Request($serverRequest))
@@ -551,14 +491,14 @@ final class FormManagerControllerTest extends FunctionalTestCase
         $subject->processRequest($request);
 
         self::assertInstanceOf(BeforeFormIsCreatedEvent::class, $state['before-form-create-listener']);
-        self::assertEquals('1:/form_definitions/new_form.form.yaml', $state['before-form-create-listener']->formPersistenceIdentifier);
+        self::assertEquals('NEW_from_listener', $state['before-form-create-listener']->formPersistenceIdentifier);
         self::assertEquals('bar', $state['before-form-create-listener']->form['label']);
     }
 
     #[Test]
     public function beforeFormIsDeletedEventIsTriggered(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');
+        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/form_definition.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
         $this->setUpBackendUser(1);
 
@@ -595,7 +535,7 @@ final class FormManagerControllerTest extends FunctionalTestCase
             ->withAttribute('extbase', new ExtbaseRequestParameters())
             ->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE);
         $parsedBody = [
-            'formPersistenceIdentifier' => '1:/form_definitions/test_form.form.yaml',
+            'formPersistenceIdentifier' => '1',
         ];
         $serverRequest = $serverRequest->withParsedBody($parsedBody);
         $request = (new Request($serverRequest))
@@ -613,9 +553,10 @@ final class FormManagerControllerTest extends FunctionalTestCase
     }
 
     #[Test]
+    #[IgnoreDeprecations] // Default FormSetup.yaml configures allowedFileMounts which triggers deprecation on bootstrap
     public function beforeFormIsDuplicatedEventIsTriggered(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');
+        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/form_definition.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
         $this->setUpBackendUser(1);
 
@@ -630,7 +571,7 @@ final class FormManagerControllerTest extends FunctionalTestCase
         $container->set(
             'before-form-duplicated-listener',
             static function (BeforeFormIsDuplicatedEvent $event) use (&$state) {
-                $event->formPersistenceIdentifier = '1:/form_definitions/duplicated_form.form.yaml';
+                $event->formPersistenceIdentifier = 'NEW_from_listener';
                 $event->form['label'] = 'bar';
                 $state['before-form-duplicated-listener'] = $event;
             }
@@ -644,8 +585,9 @@ final class FormManagerControllerTest extends FunctionalTestCase
             ->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE);
         $parsedBody = [
             'formName' => 'test',
-            'formPersistenceIdentifier' => '1:/form_definitions/test_form.form.yaml',
-            'savePath' => '1:/form_definitions/',
+            'formPersistenceIdentifier' => '1',
+            'storage' => 'database',
+            'storageLocation' => '0',
         ];
         $serverRequest = $serverRequest->withParsedBody($parsedBody);
         $request = (new Request($serverRequest))
@@ -658,13 +600,18 @@ final class FormManagerControllerTest extends FunctionalTestCase
         $subject->processRequest($request);
 
         self::assertInstanceOf(BeforeFormIsDuplicatedEvent::class, $state['before-form-duplicated-listener']);
-        self::assertEquals('1:/form_definitions/duplicated_form.form.yaml', $state['before-form-duplicated-listener']->formPersistenceIdentifier);
+        self::assertEquals('NEW_from_listener', $state['before-form-duplicated-listener']->formPersistenceIdentifier);
         self::assertEquals('bar', $state['before-form-duplicated-listener']->form['label']);
     }
 
     #[Test]
+    #[IgnoreDeprecations] // Test explicitly uses deprecated filemount storage for YAML file creation with env substitution
     public function formIsCreatedFromTemplateWithEnvSubstitution(): void
     {
+        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
+        $this->setUpBackendUser(1);
+
         $testEnv = 'TEST';
         putenv('FORM_ENV=' . $testEnv);
         $route = $this->createBackendRouteFromSymfonyRoute(
@@ -676,7 +623,8 @@ final class FormManagerControllerTest extends FunctionalTestCase
                 'formName' => 'testform',
                 'templatePath' => 'EXT:form/Tests/Functional/Controller/Fixtures/FormTemplate.yaml',
                 'prototypeName' => 'standard',
-                'savePath' => '1:/form_definitions/',
+                'storage' => 'filemount',
+                'storageLocation' => '1:/form_definitions/',
             ])
             ->withAttribute('route', $route)
             ->withAttribute('module', $route->getOption('module'))

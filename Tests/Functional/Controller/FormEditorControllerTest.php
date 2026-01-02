@@ -496,7 +496,7 @@ final class FormEditorControllerTest extends FunctionalTestCase
     #[Test]
     public function beforeFormIsSavedEventIsTriggered(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');
+        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/form_definition.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
         $this->setUpBackendUser(1);
 
@@ -511,7 +511,7 @@ final class FormEditorControllerTest extends FunctionalTestCase
         $container->set(
             'before-form-saved-listener',
             static function (BeforeFormIsSavedEvent $event) use (&$state) {
-                $event->formPersistenceIdentifier = '1:/form_definitions/new_form.form.yaml';
+                $event->formPersistenceIdentifier = '2';
                 $event->form['label'] = 'bar';
                 $state['before-form-saved-listener'] = $event;
             }
@@ -529,10 +529,10 @@ final class FormEditorControllerTest extends FunctionalTestCase
             'identifier' => 'test123_1',
             'label' => 'test123',
             'prototypeName' => 'standard',
-        ], '1:/form_definitions/test_form.form.yaml');
+        ], '1');
 
         $parsedBody = [
-            'formPersistenceIdentifier' => '1:/form_definitions/test_form.form.yaml',
+            'formPersistenceIdentifier' => '1',
             'formDefinition' => new FormDefinitionArray($formDefinition),
         ];
         $serverRequest = $serverRequest->withParsedBody($parsedBody);
@@ -546,7 +546,7 @@ final class FormEditorControllerTest extends FunctionalTestCase
         $subject->processRequest($request);
 
         self::assertInstanceOf(BeforeFormIsSavedEvent::class, $state['before-form-saved-listener']);
-        self::assertEquals('1:/form_definitions/new_form.form.yaml', $state['before-form-saved-listener']->formPersistenceIdentifier);
+        self::assertEquals('2', $state['before-form-saved-listener']->formPersistenceIdentifier);
         self::assertEquals('bar', $state['before-form-saved-listener']->form['label']);
     }
 

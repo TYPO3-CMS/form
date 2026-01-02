@@ -12,11 +12,17 @@
       <trans-unit id="formManager.new_form_name">
         <source>New form name</source>
       </trans-unit>
-      <trans-unit id="formManager.form_save_path">
+      <trans-unit id="formManager.form_save_path" x-unused-since="14.2">
         <source>Storage</source>
       </trans-unit>
-      <trans-unit id="formManager.form_save_path_description">
+      <trans-unit id="formManager.form_save_path_description" x-unused-since="14.2">
         <source>Select the storage where your form definition will be saved.</source>
+      </trans-unit>
+      <trans-unit id="formManager.form_storageLocation">
+        <source>Location</source>
+      </trans-unit>
+      <trans-unit id="formManager.form_storageLocation_description">
+        <source>Select the location where the form will be saved.</source>
       </trans-unit>
       <trans-unit id="formManager.form_prototype">
         <source>Form prototype</source>
@@ -55,7 +61,7 @@
         <source>Choose</source>
       </trans-unit>
       <trans-unit id="formManager.newFormWizard.step1.noStorages">
-        <source>No accessible form storage folders</source>
+        <source>You do not have permission to create forms. Please contact your administrator.</source>
       </trans-unit>
       <trans-unit id="formManager.newFormWizard.step2.title">
         <source>Settings</source>
@@ -77,6 +83,18 @@
       </trans-unit>
       <trans-unit id="formManager.newFormWizard.step4.errorMessage">
         <source>The form could not be saved</source>
+      </trans-unit>
+      <trans-unit id="formManager.newFormWizard.step.storages.title">
+        <source>Storage location</source>
+      </trans-unit>
+      <trans-unit id="formManager.newFormWizard.step.storages.description">
+        <source>Choose how the form should be saved:</source>
+      </trans-unit>
+      <trans-unit id="formManager.newFormWizard.step.storages.progressLabel">
+        <source>Storage</source>
+      </trans-unit>
+      <trans-unit id="formManager.newFormWizard.step.storages.summary.title">
+        <source>Storage</source>
       </trans-unit>
       <trans-unit id="formManager.duplicateFormWizard.step1.title">
         <source>Duplicate form "{0}"</source>

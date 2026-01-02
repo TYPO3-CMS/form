@@ -23,14 +23,15 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
+use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Form\Domain\DTO\FormData;
 use TYPO3\CMS\Form\Domain\DTO\FormMetadata;
 use TYPO3\CMS\Form\Domain\DTO\SearchCriteria;
+use TYPO3\CMS\Form\Domain\DTO\StorageContext;
 use TYPO3\CMS\Form\Domain\ValueObject\FormIdentifier;
 use TYPO3\CMS\Form\Mvc\Configuration\TypoScriptService;
 use TYPO3\CMS\Form\Mvc\Persistence\Event\AfterFormDefinitionLoadedEvent;
 use TYPO3\CMS\Form\Mvc\Persistence\Exception\NoUniqueIdentifierException;
-use TYPO3\CMS\Form\Mvc\Persistence\Exception\NoUniquePersistenceIdentifierException;
 use TYPO3\CMS\Form\Mvc\Persistence\Exception\PersistenceManagerException;
 use TYPO3\CMS\Form\Storage\StorageAdapterFactory;
 
@@ -85,10 +86,12 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
 
     /**
      * Save form definition to appropriate storage
+     *
+     * @throws PersistenceManagerException
      */
-    public function save(string $persistenceIdentifier, array $formDefinition, array $formSettings): void
+    public function save(string $persistenceIdentifier, array $formDefinition, array $formSettings, ?string $storageLocation = null): FormIdentifier
     {
-        if (!$this->isAllowedPersistencePath($persistenceIdentifier, $formSettings)) {
+        if (!$this->isAllowedPersistenceIdentifier($persistenceIdentifier)) {
             throw new PersistenceManagerException(
                 sprintf('Save to path "%s" is not allowed.', $persistenceIdentifier),
                 1477680881
@@ -99,9 +102,15 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
         $adapter = $this->storageAdapterFactory->getAdapterForIdentifier($persistenceIdentifier);
         $formData = FormData::fromArray($formDefinition);
 
-        $adapter->write($identifier, $formData);
+        $context = null;
+        if (MathUtility::canBeInterpretedAsInteger($storageLocation)) {
+            $context = StorageContext::create((int)$storageLocation);
+        }
 
-        $this->clearFormCache($persistenceIdentifier);
+        $savedIdentifier = $adapter->write($identifier, $formData, $context);
+
+        $this->clearFormCache($savedIdentifier->identifier);
+        return $savedIdentifier;
     }
 
     /**
@@ -184,89 +193,30 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
     }
 
     /**
-     * Get accessible form storage folders
-     * Delegates to FileStorageAdapter
-     */
-    public function getAccessibleFormStorageFolders(array $formSettings): array
-    {
-        if (!$this->storageAdapterFactory->hasAdapterType('filemount')) {
-            return [];
-        }
-
-        $adapter = $this->storageAdapterFactory->getAdapterByType('filemount');
-
-        if (method_exists($adapter, 'getAccessibleFormStorageFolders')) {
-            return $adapter->getAccessibleFormStorageFolders();
-        }
-
-        return [];
-    }
-
-    /**
-     * Get accessible extension folders
-     * Delegates to FileStorageAdapter
-     */
-    public function getAccessibleExtensionFolders(array $formSettings): array
-    {
-        if (!$this->storageAdapterFactory->hasAdapterType('filemount')) {
-            return [];
-        }
-
-        $adapter = $this->storageAdapterFactory->getAdapterByType('filemount');
-
-        if (method_exists($adapter, 'getAccessibleExtensionFolders')) {
-            return $adapter->getAccessibleExtensionFolders();
-        }
-
-        return [];
-    }
-
-    /**
      * Get unique persistence identifier for a new form
      */
-    public function getUniquePersistenceIdentifier(string $formIdentifier, string $savePath, array $formSettings): string
+    public function getUniquePersistenceIdentifier(string $storage, string $formIdentifier, ?string $savePath): string
     {
-        $formPersistenceIdentifier = $savePath . $formIdentifier . self::FORM_DEFINITION_FILE_EXTENSION;
-
-        if (!$this->exists($formPersistenceIdentifier, $formSettings)) {
-            return $formPersistenceIdentifier;
-        }
-
-        for ($attempts = 1; $attempts < 100; $attempts++) {
-            $formPersistenceIdentifier = $savePath . sprintf('%s_%d', $formIdentifier, $attempts) . self::FORM_DEFINITION_FILE_EXTENSION;
-            if (!$this->exists($formPersistenceIdentifier, $formSettings)) {
-                return $formPersistenceIdentifier;
-            }
-        }
-
-        $formPersistenceIdentifier = $savePath . sprintf('%s_%d', $formIdentifier, time()) . self::FORM_DEFINITION_FILE_EXTENSION;
-        if (!$this->exists($formPersistenceIdentifier, $formSettings)) {
-            return $formPersistenceIdentifier;
-        }
-
-        throw new NoUniquePersistenceIdentifierException(
-            sprintf('Could not find a unique persistence identifier for form identifier "%s" after %d attempts', $formIdentifier, $attempts),
-            1476010403
-        );
+        return $this->storageAdapterFactory->getAdapterByType($storage)->getUniquePersistenceIdentifier($formIdentifier, $savePath);
     }
 
     /**
      * Get unique identifier (not persistence identifier)
      */
-    public function getUniqueIdentifier(array $formSettings, string $identifier): string
+    public function getUniqueIdentifier(string $identifier): string
     {
         $originalIdentifier = $identifier;
 
-        if ($this->checkForDuplicateIdentifier($formSettings, $identifier)) {
+        if ($this->checkForDuplicateIdentifier($identifier)) {
             for ($attempts = 1; $attempts < 100; $attempts++) {
                 $identifier = sprintf('%s_%d', $originalIdentifier, $attempts);
-                if (!$this->checkForDuplicateIdentifier($formSettings, $identifier)) {
+                if (!$this->checkForDuplicateIdentifier($identifier)) {
                     return $identifier;
                 }
             }
 
             $identifier = $originalIdentifier . '_' . time();
-            if ($this->checkForDuplicateIdentifier($formSettings, $identifier)) {
+            if ($this->checkForDuplicateIdentifier($identifier)) {
                 throw new NoUniqueIdentifierException(
                     sprintf('Could not find a unique identifier for form identifier "%s" after %d attempts', $identifier, $attempts),
                     1477688567
@@ -278,17 +228,32 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
     }
 
     /**
-     * Check if persistence path is allowed
+     * Check if a storage location is allowed
+     *
+     * For database storage: storageLocation is a PID
+     * For file storage: storageLocation is a folder path (e.g., "1:/forms/")
      */
-    public function isAllowedPersistencePath(string $persistencePath, array $formSettings): bool
+    public function isAllowedStorageLocation(string $storageLocation): bool
     {
         try {
-            $identifier = new FormIdentifier($persistencePath);
-            $adapter = $this->storageAdapterFactory->getAdapterForIdentifier($persistencePath);
-            if (method_exists($adapter, 'isAllowedPersistencePath')) {
-                return $adapter->isAllowedPersistencePath($persistencePath);
-            }
-            return true;
+            $adapter = $this->storageAdapterFactory->getAdapterForIdentifier($storageLocation);
+            return $adapter->isAllowedStorageLocation($storageLocation);
+        } catch (\Exception) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a persistence identifier is allowed
+     *
+     * For database storage: identifier is a UID or NEW*
+     * For file storage: identifier is a full file path (e.g., "1:/forms/contact.form.yaml")
+     */
+    public function isAllowedPersistenceIdentifier(string $persistenceIdentifier): bool
+    {
+        try {
+            $adapter = $this->storageAdapterFactory->getAdapterForIdentifier($persistenceIdentifier);
+            return $adapter->isAllowedPersistenceIdentifier($persistenceIdentifier);
         } catch (\Exception) {
             return false;
         }
@@ -325,7 +290,7 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
     /**
      * Check if form with persistence identifier exists
      */
-    private function exists(string $persistenceIdentifier, array $formSettings): bool
+    private function exists(string $persistenceIdentifier): bool
     {
         try {
             $identifier = new FormIdentifier($persistenceIdentifier);
@@ -340,17 +305,12 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
     /**
      * Check if a form with given identifier already exists in any storage
      */
-    private function checkForDuplicateIdentifier(array $formSettings, string $identifier): bool
+    private function checkForDuplicateIdentifier(string $identifier): bool
     {
         foreach ($this->storageAdapterFactory->getAllAdapters() as $adapter) {
             try {
-                $forms = $adapter->findAll(new SearchCriteria());
-
-                foreach ($forms as $formData) {
-                    // Check the form identifier from the YAML definition
-                    if ($formData->identifier === $identifier) {
-                        return true;
-                    }
+                if ($adapter->existsByFormIdentifier($identifier)) {
+                    return true;
                 }
             } catch (\Exception) {
                 continue;
@@ -406,5 +366,23 @@ readonly class FormPersistenceManager implements FormPersistenceManagerInterface
     {
         $cacheKey = 'ext-form-load-' . hash('xxh3', $persistenceIdentifier);
         $this->runtimeCache->remove($cacheKey);
+    }
+
+    public function getAccessibleStorageAdapters(): array
+    {
+        $storageAdapters = [];
+        foreach ($this->storageAdapterFactory->getAllAdapters() as $adapter) {
+            if ($adapter->isAccessible() === false) {
+                continue;
+            }
+            $storageAdapters[] = [
+                'typeIdentifier' => $adapter->getTypeIdentifier(),
+                'label' => $adapter->getLabel(),
+                'description' => $adapter->getDescription(),
+                'iconIdentifier' => $adapter->getIconIdentifier(),
+                'options' => $adapter->getFormManagerOptions(),
+            ];
+        }
+        return $storageAdapters;
     }
 }

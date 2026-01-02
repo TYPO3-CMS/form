@@ -21,7 +21,9 @@ use TYPO3\CMS\Core\DataHandling\SoftReference\AbstractSoftReferenceParser;
 use TYPO3\CMS\Core\DataHandling\SoftReference\SoftReferenceParserResult;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
+use TYPO3\CMS\Form\Domain\Repository\FormDefinitionRepository;
 
 /**
  * Register new referenced formDefinitions within a plugin as a soft reference.
@@ -39,9 +41,17 @@ class FormPersistenceIdentifierSoftReferenceParser extends AbstractSoftReference
         $this->setTokenIdBasePrefix($table, (string)$uid, $field, $structurePath);
         $tokenId = $this->makeTokenID($content);
 
+        // Handle extension paths (EXT:extension_key/...)
         if (PathUtility::isExtensionPath($content)) {
             return $this->createResultForExtensionReference($content, $tokenId);
         }
+
+        // Handle numeric database identifiers (uid)
+        if (MathUtility::canBeInterpretedAsInteger($content)) {
+            return $this->createResultForDatabaseReference($content, $tokenId);
+        }
+
+        // Handle file storage identifiers (storage:/path)
         try {
             $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
             $file = $resourceFactory->retrieveFileOrFolderObject($content);
@@ -78,6 +88,25 @@ class FormPersistenceIdentifierSoftReferenceParser extends AbstractSoftReference
                     'type' => 'string',
                     'tokenID' => $tokenId,
                     'tokenValue' => $extensionReference,
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Create soft reference result for database identifiers (numeric uid)
+     * These are stored as db references in sys_refindex for tracking usage
+     */
+    private function createResultForDatabaseReference(string $databaseReference, string $tokenId): SoftReferenceParserResult
+    {
+        return SoftReferenceParserResult::create('{softref:' . $tokenId . '}', [
+            $tokenId => [
+                'matchString' => $databaseReference,
+                'subst' => [
+                    'type' => 'db',
+                    'recordRef' => FormDefinitionRepository::TABLE_NAME . ':' . $databaseReference,
+                    'tokenID' => $tokenId,
+                    'tokenValue' => $databaseReference,
                 ],
             ],
         ]);

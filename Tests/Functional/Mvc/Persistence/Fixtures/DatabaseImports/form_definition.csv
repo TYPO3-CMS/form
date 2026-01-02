@@ -1,0 +1,3 @@
+form_definition,,,,,,
+,uid,pid,identifier,label,configuration,deleted
+,1,0,database-test-form,"Test Database Form","{""identifier"":""database-test-form"",""type"":""Form"",""label"":""Test Database Form"",""prototypeName"":""standard"",""renderingOptions"":[],""finishers"":[],""renderables"":[{""identifier"":""page-1"",""type"":""Page"",""label"":""Page 1"",""renderables"":[{""identifier"":""email-1"",""type"":""Email"",""label"":""Email Address""}]}],""variants"":[]}",0

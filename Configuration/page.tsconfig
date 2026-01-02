@@ -1,0 +1,4 @@
+# Deny creating form_definition records via the "New Record" wizard
+# or the "+" button in the record list. Form definitions should only
+# be created through the Form Manager module.
+mod.web_list.deniedNewTables := addToList(form_definition)

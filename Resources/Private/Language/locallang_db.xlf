@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" datatype="plaintext" original="EXT:form/Resources/Private/Language/locallang_db.xlf" date="2026-01-13T15:39:14Z" product-name="form">
+    <header/>
+    <body>
+      <trans-unit id="form_definition">
+        <source>Form definition</source>
+      </trans-unit>
+      <trans-unit id="form_definition.label">
+        <source>Name</source>
+      </trans-unit>
+      <trans-unit id="form_definition.identifier">
+        <source>Identifier</source>
+      </trans-unit>
+      <trans-unit id="form_definition.configuration">
+        <source>Configuration</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

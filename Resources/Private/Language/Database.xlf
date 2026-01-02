@@ -208,10 +208,10 @@
         <source>Delete this form</source>
       </trans-unit>
       <trans-unit id="formManager.forms_not_found.title">
-        <source>No forms found</source>
+        <source>No forms exist</source>
       </trans-unit>
       <trans-unit id="formManager.forms_not_found.message">
-        <source>There are currently no forms found in the system.</source>
+        <source>Once created, forms will be displayed here.</source>
       </trans-unit>
       <trans-unit id="formManager.forms_not_found_by_search_term.message">
         <source>There are currently no forms found containing the search term "%1s".</source>
@@ -220,7 +220,10 @@
         <source>Remove search term</source>
       </trans-unit>
       <trans-unit id="formManager.invalid">
-        <source>Invalid YAML file</source>
+        <source>Invalid form definition</source>
+      </trans-unit>
+      <trans-unit id="formManager.readOnly">
+        <source>Read only</source>
       </trans-unit>
       <trans-unit id="formManager.duplicate_identifier">
         <source>Duplicate identifier</source>
@@ -239,6 +242,9 @@
       </trans-unit>
       <trans-unit id="formManager.selectablePrototypesConfiguration.standard.newFormTemplates.simpleContactForm.label">
         <source>Simple contact form (ext:form example)</source>
+      </trans-unit>
+      <trans-unit id="formManager.showHistory">
+        <source>Show History</source>
       </trans-unit>
       <trans-unit id="formEditor.header">
         <source>Form editor</source>
@@ -1421,6 +1427,24 @@ If you need higher values contact your administrator for help.
       </trans-unit>
       <trans-unit id="formEditor.modals.newPages.filter.placeholder">
         <source>Search for any step type</source>
+      </trans-unit>
+      <trans-unit id="formManager.storage.database.label">
+        <source>Database</source>
+      </trans-unit>
+      <trans-unit id="formManager.storage.database.description">
+        <source>Store the form as a record in the database. Recommended for most use cases, because it treats forms as user-generated content and allows integrated versioning.</source>
+      </trans-unit>
+      <trans-unit id="formManager.storage.fileMount.label">
+        <source>File (deprecated)</source>
+      </trans-unit>
+      <trans-unit id="formManager.storage.fileMount.description">
+        <source>Store the form as a YAML file. This option will be removed in a future TYPO3 version. Use "Database" instead. Files can still be provided within extensions.</source>
+      </trans-unit>
+      <trans-unit id="formManager.storage.extension.label">
+        <source>Extension</source>
+      </trans-unit>
+      <trans-unit id="formManager.storage.extension.description">
+        <source>Store the form inside an extension. Such forms are then not meant for editing, but provided as-is.</source>
       </trans-unit>
     </body>
   </file>

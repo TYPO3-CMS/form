@@ -39,6 +39,8 @@ final readonly class FormMetadata
         public ?int $fileUid = null,
         public int $referenceCount = 0,
         public ?string $editUrl = null,
+        public ?string $storageLocation = null,
+        public array $actions = [],
     ) {}
 
     public static function fromArray(array $data): self
@@ -57,6 +59,8 @@ final readonly class FormMetadata
             fileUid: $data['fileUid'] ?? null,
             referenceCount: $data['referenceCount'] ?? 0,
             editUrl: $data['editUrl'] ?? null,
+            storageLocation: $data['storageLocation'] ?? null,
+            actions: $data['actions'] ?? [],
         );
     }
 
@@ -97,11 +101,12 @@ final readonly class FormMetadata
             'readOnly' => $this->readOnly,
             'removable' => $this->removable,
             'storageType' => $this->storageType,
-            'location' => $this->storageType,
+            'storageLocation' => $this->storageLocation ?? $this->storageType,
             'duplicateIdentifier' => $this->duplicateIdentifier,
             'fileUid' => $this->fileUid,
             'referenceCount' => $this->referenceCount,
             'editUrl' => $this->editUrl,
+            'actions' => $this->actions,
         ];
     }
 
@@ -121,6 +126,8 @@ final readonly class FormMetadata
             fileUid: $changes['fileUid'] ?? $this->fileUid,
             referenceCount: $changes['referenceCount'] ?? $this->referenceCount,
             editUrl: $changes['editUrl'] ?? $this->editUrl,
+            storageLocation: $changes['storageLocation'] ?? $this->storageLocation,
+            actions: $changes['actions'] ?? $this->actions,
         );
     }
 
@@ -167,5 +174,15 @@ final readonly class FormMetadata
     public function withEditUrl(string $editUrl): self
     {
         return $this->with(['editUrl' => $editUrl]);
+    }
+
+    public function withStorageLocation(?string $storageLocation): self
+    {
+        return $this->with(['storageLocation' => $storageLocation]);
+    }
+
+    public function withActions(array $actions): self
+    {
+        return $this->with(['actions' => $actions]);
     }
 }

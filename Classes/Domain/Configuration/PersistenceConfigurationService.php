@@ -76,12 +76,21 @@ final readonly class PersistenceConfigurationService
      * Get allowed file mounts from form configuration
      *
      * @return string[] Array of allowed file mount paths (e.g., ["1:/forms/", "2:/user_forms/"])
+     * @deprecated since v14.2, will be removed in v15.0. Use database storage instead.
      */
     public function getAllowedFileMounts(): array
     {
         $persistenceSettings = $this->getPersistenceManagerSettings();
         $allowedFileMounts = $persistenceSettings['allowedFileMounts'] ?? [];
-        return is_array($allowedFileMounts) ? $allowedFileMounts : [];
+        $result = is_array($allowedFileMounts) ? $allowedFileMounts : [];
+        if ($result !== []) {
+            trigger_error(
+                'The form persistence configuration option "allowedFileMounts" is deprecated since TYPO3 v14.2'
+                . ' and will be removed in v15.0. Migrate to database storage using the upgrade wizard. See Deprecation-108653.',
+                E_USER_DEPRECATED
+            );
+        }
+        return $result;
     }
 
     /**
@@ -95,6 +104,23 @@ final readonly class PersistenceConfigurationService
         $allowedExtensionPaths = $persistenceSettings['allowedExtensionPaths'] ?? [];
 
         return is_array($allowedExtensionPaths) ? $allowedExtensionPaths : [];
+    }
+
+    /**
+     * Get allowed pages for form storage.
+     *
+     * Forms are always stored on pid 0 (root level).
+     *
+     * @return array<int, array{uid: int, title: string}> Array of allowed page IDs
+     */
+    public function getAllowedPages(): array
+    {
+        return [
+            0 => [
+                'uid' => 0,
+                'title' => 'Root',
+            ],
+        ];
     }
 
     /**
@@ -128,45 +154,6 @@ final readonly class PersistenceConfigurationService
             'sortByKeys' => $persistenceSettings['sortByKeys'] ?? ['name', 'fileUid'],
             'sortAscending' => (bool)($persistenceSettings['sortAscending'] ?? true),
         ];
-    }
-
-    /**
-     * Get default storage path for new forms
-     */
-    public function getDefaultStoragePath(): string
-    {
-        $allowedFileMounts = $this->getAllowedFileMounts();
-
-        // Return first allowed file mount as default
-        if (!empty($allowedFileMounts)) {
-            return rtrim($allowedFileMounts[0], '/') . '/';
-        }
-
-        // Fallback
-        return '1:/forms/';
-    }
-
-    /**
-     * Get database storage settings
-     */
-    public function getDatabaseStorageSettings(): array
-    {
-        $persistenceSettings = $this->getPersistenceManagerSettings();
-
-        return [
-            'enabled' => (bool)($persistenceSettings['allowDatabaseStorage'] ?? true),
-            'table' => $persistenceSettings['databaseStorageTable'] ?? 'tx_form_domain_model_formdefinition',
-            'pid' => (int)($persistenceSettings['databaseStoragePid'] ?? 0),
-        ];
-    }
-
-    /**
-     * Get specific setting from persistence manager configuration
-     */
-    public function getSetting(string $key, mixed $default = null): mixed
-    {
-        $persistenceSettings = $this->getPersistenceManagerSettings();
-        return $persistenceSettings[$key] ?? $default;
     }
 
     /**

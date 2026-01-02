@@ -23,9 +23,9 @@ use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Form\Domain\DTO\FormMetadata;
 use TYPO3\CMS\Form\Domain\DTO\SearchCriteria;
 use TYPO3\CMS\Form\Domain\ValueObject\FormIdentifier;
-use TYPO3\CMS\Form\Mvc\Persistence\Exception\NoUniqueIdentifierException;
 use TYPO3\CMS\Form\Mvc\Persistence\Exception\NoUniquePersistenceIdentifierException;
 use TYPO3\CMS\Form\Mvc\Persistence\Exception\PersistenceManagerException;
+use TYPO3\CMS\Form\Mvc\Persistence\FormPersistenceManagerInterface;
 
 /**
  * Abstract helper class for file-based form persistence
@@ -37,7 +37,7 @@ use TYPO3\CMS\Form\Mvc\Persistence\Exception\PersistenceManagerException;
  */
 abstract class AbstractFileStorageAdapter
 {
-    public const FORM_DEFINITION_FILE_EXTENSION = '.form.yaml';
+    public const FORM_DEFINITION_FILE_EXTENSION = FormPersistenceManagerInterface::FORM_DEFINITION_FILE_EXTENSION;
 
     protected ?StorageRepository $storageRepository = null;
 
@@ -52,7 +52,14 @@ abstract class AbstractFileStorageAdapter
     }
 
     abstract public function exists(FormIdentifier $identifier): bool;
+    abstract public function existsByFormIdentifier(string $formIdentifier): bool;
     abstract public function findAll(SearchCriteria $criteria): array;
+
+    /**
+     * Build a user-friendly storageLocation label for display
+     * Each storage adapter implements this to provide appropriate storageLocation information
+     */
+    abstract protected function buildStorageLocationLabel(string $persistenceIdentifier): string;
 
     /**
      * This takes a form identifier and returns a unique persistence identifier for it.
@@ -60,27 +67,28 @@ abstract class AbstractFileStorageAdapter
      * exists a suffix is appended until the persistence identifier is unique.
      *
      * @param string $formIdentifier lowerCamelCased form identifier
-     * @param string $savePath Path where the form should be saved (e.g., "1:/forms/")
+     * @param string $storageLocation Path where the form should be saved (e.g., "1:/forms/")
      * @return string unique form persistence identifier (e.g., "1:/forms/contact.form.yaml")
      * @throws NoUniquePersistenceIdentifierException
+     * @throws PersistenceManagerException
      */
-    public function getUniquePersistenceIdentifier(string $formIdentifier, string $savePath): string
+    public function getUniquePersistenceIdentifier(string $formIdentifier, string $storageLocation): string
     {
-        $savePath = rtrim($savePath, '/') . '/';
-        $formPersistenceIdentifier = $savePath . $formIdentifier . self::FORM_DEFINITION_FILE_EXTENSION;
+        $storageLocation = rtrim($storageLocation, '/') . '/';
+        $formPersistenceIdentifier = $storageLocation . $formIdentifier . self::FORM_DEFINITION_FILE_EXTENSION;
 
         if (!$this->exists(new FormIdentifier($formPersistenceIdentifier))) {
             return $formPersistenceIdentifier;
         }
 
         for ($attempts = 1; $attempts < 100; $attempts++) {
-            $formPersistenceIdentifier = $savePath . sprintf('%s_%d', $formIdentifier, $attempts) . self::FORM_DEFINITION_FILE_EXTENSION;
+            $formPersistenceIdentifier = $storageLocation . sprintf('%s_%d', $formIdentifier, $attempts) . self::FORM_DEFINITION_FILE_EXTENSION;
             if (!$this->exists(new FormIdentifier($formPersistenceIdentifier))) {
                 return $formPersistenceIdentifier;
             }
         }
 
-        $formPersistenceIdentifier = $savePath . sprintf('%s_%d', $formIdentifier, time()) . self::FORM_DEFINITION_FILE_EXTENSION;
+        $formPersistenceIdentifier = $storageLocation . sprintf('%s_%d', $formIdentifier, time()) . self::FORM_DEFINITION_FILE_EXTENSION;
         if (!$this->exists(new FormIdentifier($formPersistenceIdentifier))) {
             return $formPersistenceIdentifier;
         }
@@ -89,50 +97,6 @@ abstract class AbstractFileStorageAdapter
             sprintf('Could not find a unique persistence identifier for form identifier "%s" after %d attempts', $formIdentifier, $attempts),
             1764879439
         );
-    }
-
-    /**
-     * This takes a form identifier and returns a unique identifier for it.
-     * If a formDefinition with the same identifier already exists a suffix is
-     * appended until the identifier is unique.
-     *
-     * @return string unique form identifier
-     * @throws NoUniqueIdentifierException
-     */
-    public function getUniqueIdentifier(string $identifier): string
-    {
-        $originalIdentifier = $identifier;
-        if ($this->checkForDuplicateIdentifier($identifier)) {
-            for ($attempts = 1; $attempts < 100; $attempts++) {
-                $identifier = sprintf('%s_%d', $originalIdentifier, $attempts);
-                if (!$this->checkForDuplicateIdentifier($identifier)) {
-                    return $identifier;
-                }
-            }
-            $identifier = $originalIdentifier . '_' . time();
-            if ($this->checkForDuplicateIdentifier($identifier)) {
-                throw new NoUniqueIdentifierException(
-                    sprintf('Could not find a unique identifier for form identifier "%s" after %d attempts', $identifier, $attempts),
-                    1764879438
-                );
-            }
-        }
-        return $identifier;
-    }
-
-    /**
-     * Check if an identifier is already used by a formDefinition.
-     */
-    protected function checkForDuplicateIdentifier(string $identifier): bool
-    {
-        $identifierUsed = false;
-        foreach ($this->findAll(new SearchCriteria()) as $formDefinition) {
-            if ($formDefinition->identifier === $identifier) {
-                $identifierUsed = true;
-                break;
-            }
-        }
-        return $identifierUsed;
     }
 
     protected function extractMetaDataFromCouldBeFormDefinition(string $maybeRawFormDefinition): array

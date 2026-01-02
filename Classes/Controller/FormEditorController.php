@@ -94,13 +94,13 @@ class FormEditorController extends ActionController
      *
      * @throws PersistenceManagerException
      */
-    protected function indexAction(string $formPersistenceIdentifier = '', ?string $prototypeName = null): ResponseInterface
+    protected function indexAction(string $formPersistenceIdentifier = '', ?string $prototypeName = null, string $returnUrl = ''): ResponseInterface
     {
         if ($formPersistenceIdentifier === '') {
             return new RedirectResponse((string)$this->coreUriBuilder->buildUriFromRoute('form_manager'));
         }
         $formSettings = $this->getFormSettings();
-        if (!$this->formPersistenceManager->isAllowedPersistencePath($formPersistenceIdentifier, $formSettings)) {
+        if (!$this->formPersistenceManager->isAllowedPersistenceIdentifier($formPersistenceIdentifier)) {
             throw new PersistenceManagerException(sprintf('Read "%s" is not allowed', $formPersistenceIdentifier), 1614500662);
         }
         if (PathUtility::isExtensionPath($formPersistenceIdentifier)
@@ -140,7 +140,7 @@ class FormEditorController extends ActionController
             'additionalViewModelModules' => $additionalViewModelJavaScriptModules,
             'maximumUndoSteps' => $prototypeConfiguration['formEditor']['maximumUndoSteps'],
         ];
-        $moduleTemplate = $this->initializeModuleTemplate($this->request);
+        $moduleTemplate = $this->initializeModuleTemplate($this->request, $returnUrl);
         $moduleTemplate->assign('formEditorTemplates', $this->renderFormEditorTemplates($prototypeConfiguration, $formEditorDefinitions));
         $moduleTemplate->getDocHeaderComponent()->addBreadcrumbSuffixNode(new BreadcrumbNode(
             identifier: $formPersistenceIdentifier,
@@ -215,11 +215,10 @@ class FormEditorController extends ActionController
             'status' => 'success',
         ];
         try {
-            $formSettings = $this->getFormSettings();
-            if (!$this->formPersistenceManager->isAllowedPersistencePath($formPersistenceIdentifier, $formSettings)) {
+            if (!$this->formPersistenceManager->isAllowedPersistenceIdentifier($formPersistenceIdentifier)) {
                 throw new PersistenceManagerException(sprintf('Save "%s" is not allowed', $formPersistenceIdentifier), 1614500663);
             }
-            $this->formPersistenceManager->save($formPersistenceIdentifier, $formDefinition, $formSettings);
+            $this->formPersistenceManager->save($formPersistenceIdentifier, $formDefinition, []);
             $this->flushPageCache($formPersistenceIdentifier);
             $prototypeConfiguration = $this->configurationService->getPrototypeConfiguration($formDefinition['prototypeName']);
             $formDefinition = $this->transformFormDefinitionForFormEditor($prototypeConfiguration, $formDefinition, $formPersistenceIdentifier);
@@ -382,12 +381,13 @@ class FormEditorController extends ActionController
     /**
      * Initialize ModuleTemplate and register docheader icons.
      */
-    protected function initializeModuleTemplate(RequestInterface $request): ModuleTemplate
+    protected function initializeModuleTemplate(RequestInterface $request, string $returnUrl = ''): ModuleTemplate
     {
         $moduleTemplate = $this->moduleTemplateFactory->create($request);
         $getVars = $request->getArguments();
         if (isset($getVars['action']) && $getVars['action'] === 'index') {
-            $closeButton = $this->componentFactory->createCloseButton((string)$this->coreUriBuilder->buildUriFromRoute('web_FormFormbuilder'))
+            $closeUrl = $returnUrl !== '' ? $returnUrl : (string)$this->coreUriBuilder->buildUriFromRoute('web_FormFormbuilder');
+            $closeButton = $this->componentFactory->createCloseButton($closeUrl)
                 ->setDataAttributes(['identifier' => 'closeButton'])
                 ->setClasses('formeditor-element-close-form-button hidden');
             $moduleTemplate->addButtonToButtonBar($closeButton, ButtonBar::BUTTON_POSITION_LEFT, 2);

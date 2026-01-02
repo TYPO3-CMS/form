@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Form\Tests\Functional\Mvc\Persistence;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\ServerRequest;
@@ -53,6 +54,37 @@ final class FormPersistenceManagerTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function loadFormFromDatabaseStorageReturnsFormDefinition(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/form_definition.csv');
+        $subject = $this->get(FormPersistenceManager::class);
+        $persistenceIdentifier = '1';
+        $result = $subject->load($persistenceIdentifier);
+
+        self::assertArrayHasKey('identifier', $result);
+        self::assertArrayHasKey('label', $result);
+        self::assertArrayHasKey('renderables', $result);
+        self::assertSame('database-test-form', $result['identifier']);
+        self::assertSame('Test Database Form', $result['label']);
+        self::assertSame('standard', $result['prototypeName']);
+    }
+
+    #[Test]
+    public function loadNonExistentFormFromDatabaseStorageReturnsInvalidFormDefinition(): void
+    {
+        $subject = $this->get(FormPersistenceManager::class);
+        $persistenceIdentifier = '999';
+        $result = $subject->load($persistenceIdentifier);
+
+        self::assertArrayHasKey('invalid', $result);
+        self::assertTrue($result['invalid']);
+        self::assertArrayHasKey('label', $result);
+        self::assertArrayHasKey('identifier', $result);
+        self::assertSame($persistenceIdentifier, $result['identifier']);
+    }
+
+    #[Test]
+    #[IgnoreDeprecations] // Test explicitly covers deprecated FileMountStorageAdapter
     public function loadFormFromFilemountStorageReturnsFormDefinition(): void
     {
         $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');
@@ -84,6 +116,7 @@ final class FormPersistenceManagerTest extends FunctionalTestCase
     }
 
     #[Test]
+    #[IgnoreDeprecations] // Test explicitly covers deprecated FileMountStorageAdapter
     public function loadNonExistentFormFromFilemountStorageReturnsInvalidFormDefinition(): void
     {
         $this->importCSVDataSet(__DIR__ . '/Fixtures/DatabaseImports/sys_file_storage.csv');

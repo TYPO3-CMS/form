@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Form\Tests\Functional\RequestHandling;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage;
@@ -253,6 +254,7 @@ final class RequestHandlingTest extends FunctionalTestCase
     }
 
     #[DataProvider('theCachingBehavesTheSameForAllFormIntegrationVariantsDataProvider')]
+    #[IgnoreDeprecations] // Default FormSetup.yaml configures allowedFileMounts which triggers deprecation during frontend rendering
     #[Test]
     public function theCachingBehavesTheSameForAllFormIntegrationVariants(string $formIdentifier, string $formNamePrefix): void
     {

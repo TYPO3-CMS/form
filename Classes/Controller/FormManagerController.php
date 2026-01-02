@@ -19,6 +19,7 @@ namespace TYPO3\CMS\Form\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Backend\Routing\Exception\RouteNotFoundException;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\Components\ComponentFactory;
 use TYPO3\CMS\Backend\Template\ModuleTemplate;
@@ -35,10 +36,12 @@ use TYPO3\CMS\Core\Pagination\ArrayPaginator;
 use TYPO3\CMS\Core\Pagination\SimplePagination;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Extbase\Mvc\View\JsonView;
 use TYPO3\CMS\Form\Domain\DTO\SearchCriteria;
+use TYPO3\CMS\Form\Domain\Repository\FormDefinitionRepository;
 use TYPO3\CMS\Form\Event\BeforeFormIsCreatedEvent;
 use TYPO3\CMS\Form\Event\BeforeFormIsDeletedEvent;
 use TYPO3\CMS\Form\Event\BeforeFormIsDuplicatedEvent;
@@ -83,7 +86,7 @@ class FormManagerController extends ActionController
     protected function indexAction(int $page = 1, string $searchTerm = '', string $orderField = '', ?string $orderDirection = null): ResponseInterface
     {
         $formSettings = $this->getFormSettings();
-        $hasForms = $this->formPersistenceManager->hasForms($formSettings);
+        $hasForms = $this->formPersistenceManager->hasForms([]);
         $searchCriteria = new SearchCriteria(searchTerm: trim($searchTerm), orderField: $orderField, orderDirection: $orderDirection);
         $forms = $hasForms ? $this->getAvailableFormDefinitions($formSettings, $searchCriteria) : [];
         $arrayPaginator = new ArrayPaginator($forms, $page, self::PAGINATION_MAX);
@@ -136,11 +139,11 @@ class FormManagerController extends ActionController
      * @throws FormException
      * @throws PersistenceManagerException
      */
-    protected function createAction(string $formName, string $templatePath, string $prototypeName, string $savePath): ResponseInterface
+    protected function createAction(string $formName, string $templatePath, string $prototypeName, string $storage, string $storageLocation): ResponseInterface
     {
         $formSettings = $this->getFormSettings();
-        if (!$this->formPersistenceManager->isAllowedPersistencePath($savePath, $formSettings)) {
-            throw new PersistenceManagerException(sprintf('Save to path "%s" is not allowed', $savePath), 1614500657);
+        if (!$this->formPersistenceManager->isAllowedStorageLocation($storageLocation)) {
+            throw new PersistenceManagerException(sprintf('Save to storage location "%s" is not allowed', $storageLocation), 1614500657);
         }
         if (!$this->isValidTemplatePath($formSettings, $prototypeName, $templatePath)) {
             throw new FormException(sprintf('The template path "%s" is not allowed', $templatePath), 1329233410);
@@ -151,21 +154,21 @@ class FormManagerController extends ActionController
         $templatePath = GeneralUtility::getFileAbsFileName($templatePath);
         $form = $this->yamlSource->load([$templatePath]);
         $form['label'] = $formName;
-        $form['identifier'] = $this->formPersistenceManager->getUniqueIdentifier($formSettings, $this->convertFormNameToIdentifier($formName));
+        $form['identifier'] = $this->formPersistenceManager->getUniqueIdentifier($this->convertFormNameToIdentifier($formName));
         $form['prototypeName'] = $prototypeName;
-        $formPersistenceIdentifier = $this->formPersistenceManager->getUniquePersistenceIdentifier($form['identifier'], $savePath, $formSettings);
+        $formPersistenceIdentifier = $this->formPersistenceManager->getUniquePersistenceIdentifier($storage, $form['identifier'], $storageLocation);
         $event = $this->eventDispatcher->dispatch(
             new BeforeFormIsCreatedEvent($formPersistenceIdentifier, $form, $this->request)
         );
         $formPersistenceIdentifier = $event->formPersistenceIdentifier;
         $form = $event->form;
-        $response = [
-            'status' => 'success',
-            'url' => (string)$this->coreUriBuilder->buildUriFromRoute('form_editor', ['formPersistenceIdentifier' => $formPersistenceIdentifier]),
-        ];
         $form = ArrayUtility::stripTagsFromValuesRecursive($form);
         try {
-            $this->formPersistenceManager->save($formPersistenceIdentifier, $form, $formSettings);
+            $formIdentifier = $this->formPersistenceManager->save($formPersistenceIdentifier, $form, [], $storageLocation);
+            $response = [
+                'status' => 'success',
+                'url' => (string)$this->coreUriBuilder->buildUriFromRoute('form_editor', ['formPersistenceIdentifier' => $formIdentifier->identifier]),
+            ];
         } catch (PersistenceManagerException $e) {
             $response = [
                 'status' => 'error',
@@ -199,31 +202,30 @@ class FormManagerController extends ActionController
      *
      * @throws PersistenceManagerException
      */
-    protected function duplicateAction(string $formName, string $formPersistenceIdentifier, string $savePath): ResponseInterface
+    protected function duplicateAction(string $formName, string $formPersistenceIdentifier, string $storage, string $storageLocation): ResponseInterface
     {
-        $formSettings = $this->getFormSettings();
-        if (!$this->formPersistenceManager->isAllowedPersistencePath($savePath, $formSettings)) {
-            throw new PersistenceManagerException(sprintf('Save to path "%s" is not allowed', $savePath), 1614500658);
+        if (!$this->formPersistenceManager->isAllowedStorageLocation($storageLocation)) {
+            throw new PersistenceManagerException(sprintf('Save to storage location "%s" is not allowed', $storageLocation), 1614500658);
         }
-        if (!$this->formPersistenceManager->isAllowedPersistencePath($formPersistenceIdentifier, $formSettings)) {
+        if (!$this->formPersistenceManager->isAllowedPersistenceIdentifier($formPersistenceIdentifier)) {
             throw new PersistenceManagerException(sprintf('Read of "%s" is not allowed', $formPersistenceIdentifier), 1614500659);
         }
         $formToDuplicate = $this->formPersistenceManager->load($formPersistenceIdentifier);
         $formToDuplicate['label'] = $formName;
-        $formToDuplicate['identifier'] = $this->formPersistenceManager->getUniqueIdentifier($formSettings, $this->convertFormNameToIdentifier($formName));
-        $formPersistenceIdentifier = $this->formPersistenceManager->getUniquePersistenceIdentifier($formToDuplicate['identifier'], $savePath, $formSettings);
+        $formToDuplicate['identifier'] = $this->formPersistenceManager->getUniqueIdentifier($this->convertFormNameToIdentifier($formName));
+        $formPersistenceIdentifier = $this->formPersistenceManager->getUniquePersistenceIdentifier($storage, $formToDuplicate['identifier'], $storageLocation);
         $event = $this->eventDispatcher->dispatch(
             new BeforeFormIsDuplicatedEvent($formPersistenceIdentifier, $formToDuplicate, $this->request)
         );
         $formPersistenceIdentifier = $event->formPersistenceIdentifier;
         $formToDuplicate = $event->form;
-        $response = [
-            'status' => 'success',
-            'url' => (string)$this->coreUriBuilder->buildUriFromRoute('form_editor', ['formPersistenceIdentifier' => $formPersistenceIdentifier]),
-        ];
         $formToDuplicate = ArrayUtility::stripTagsFromValuesRecursive($formToDuplicate);
         try {
-            $this->formPersistenceManager->save($formPersistenceIdentifier, $formToDuplicate, $formSettings);
+            $formIdentifier = $this->formPersistenceManager->save($formPersistenceIdentifier, $formToDuplicate, [], $storageLocation);
+            $response = [
+                'status' => 'success',
+                'url' => (string)$this->coreUriBuilder->buildUriFromRoute('form_editor', ['formPersistenceIdentifier' => $formIdentifier->identifier]),
+            ];
         } catch (PersistenceManagerException $e) {
             $response = [
                 'status' => 'error',
@@ -258,9 +260,8 @@ class FormManagerController extends ActionController
      */
     protected function referencesAction(string $formPersistenceIdentifier): ResponseInterface
     {
-        $formSettings = $this->getFormSettings();
-        if (!$this->formPersistenceManager->isAllowedPersistencePath($formPersistenceIdentifier, $formSettings)) {
-            throw new PersistenceManagerException(sprintf('Read from "%s" is not allowed', $formPersistenceIdentifier), 1614500660);
+        if (!$this->formPersistenceManager->isAllowedPersistenceIdentifier($formPersistenceIdentifier)) {
+            throw new PersistenceManagerException(sprintf('Access to "%s" is not allowed', $formPersistenceIdentifier), 1614500661);
         }
         // referencesAction uses the extbase JsonView::class.
         // That's why we have to set the view variables in this way.
@@ -289,8 +290,8 @@ class FormManagerController extends ActionController
     protected function deleteAction(string $formPersistenceIdentifier): ResponseInterface
     {
         $formSettings = $this->getFormSettings();
-        if (!$this->formPersistenceManager->isAllowedPersistencePath($formPersistenceIdentifier, $formSettings)) {
-            throw new PersistenceManagerException(sprintf('Delete "%s" is not allowed', $formPersistenceIdentifier), 1614500661);
+        if (!$this->formPersistenceManager->isAllowedPersistenceIdentifier($formPersistenceIdentifier)) {
+            throw new PersistenceManagerException(sprintf('Delete "%s" is not allowed', $formPersistenceIdentifier), 1768562524);
         }
 
         $hasReferences = !empty($this->databaseService->getReferencesByPersistenceIdentifier($formPersistenceIdentifier));
@@ -304,7 +305,7 @@ class FormManagerController extends ActionController
             if ($event->preventDeletion) {
                 $response = $this->getErrorResponseForDeleteAction($formSettings, $formPersistenceIdentifier);
             } else {
-                $this->formPersistenceManager->delete($formPersistenceIdentifier, $formSettings);
+                $this->formPersistenceManager->delete($formPersistenceIdentifier, []);
                 $response = [
                     'status' => 'success',
                     'url' => $this->uriBuilder->uriFor('index', [], 'FormManager'),
@@ -349,52 +350,20 @@ class FormManagerController extends ActionController
     }
 
     /**
-     * Return a list of all accessible file mountpoints.
-     *
-     * Only registered mount points from
-     * persistenceManager.allowedFileMounts
-     * are listed. This list will be reduced by the configured
-     * mount points for the current backend user.
-     */
-    protected function getAccessibleFormStorageFolders(array $formSettings, bool $allowSaveToExtensionPaths): array
-    {
-        $preparedAccessibleFormStorageFolders = [];
-        foreach ($this->formPersistenceManager->getAccessibleFormStorageFolders($formSettings) as $identifier => $folder) {
-            $preparedAccessibleFormStorageFolders[] = [
-                'label' => $folder->getStorage()->isPublic() ? $folder->getPublicUrl() : $identifier,
-                'value' => $identifier,
-            ];
-        }
-        if ($allowSaveToExtensionPaths) {
-            foreach ($this->formPersistenceManager->getAccessibleExtensionFolders($formSettings) as $relativePath => $fullPath) {
-                $preparedAccessibleFormStorageFolders[] = [
-                    'label' => $relativePath,
-                    'value' => $relativePath,
-                ];
-            }
-        }
-        return $preparedAccessibleFormStorageFolders;
-    }
-
-    /**
      * Returns the json encoded data which is used by the form editor
      * JavaScript app.
      */
     protected function getFormManagerAppInitialData(array $formSettings): array
     {
-        $accessibleFormStorageFolders = $this->getAccessibleFormStorageFolders(
-            $formSettings,
-            $formSettings['persistenceManager']['allowSaveToExtensionPaths'] ?? false
-        );
         $formManagerAppInitialData = [
             'selectablePrototypesConfiguration' => $formSettings['formManager']['selectablePrototypesConfiguration'],
-            'accessibleFormStorageFolders' => $accessibleFormStorageFolders,
             'endpoints' => [
                 'create' => $this->uriBuilder->uriFor('create'),
                 'duplicate' => $this->uriBuilder->uriFor('duplicate'),
                 'delete' => $this->uriBuilder->uriFor('delete'),
                 'references' => $this->uriBuilder->uriFor('references'),
             ],
+            'accessibleStorageAdapters' => $this->formPersistenceManager->getAccessibleStorageAdapters(),
         ];
         $formManagerAppInitialData = ArrayUtility::reIndexNumericArrayKeysRecursive($formManagerAppInitialData);
         return $this->translationService->translateValuesRecursive(
@@ -411,6 +380,7 @@ class FormManagerController extends ActionController
     {
         $allReferencesForFileUid = $this->databaseService->getAllReferencesForFileUid();
         $allReferencesForPersistenceIdentifier = $this->databaseService->getAllReferencesForPersistenceIdentifier();
+        $allReferencesForFormDefinitionUid = $this->databaseService->getAllReferencesForFormDefinitionUid();
         $availableFormDefinitions = [];
 
         foreach ($this->formPersistenceManager->listForms($formSettings, $searchCriteria) as $formMetadata) {
@@ -419,6 +389,8 @@ class FormManagerController extends ActionController
                 && array_key_exists($formMetadata->fileUid, $allReferencesForFileUid)
             ) {
                 $referenceCount = $allReferencesForFileUid[$formMetadata->fileUid];
+            } elseif ($formMetadata->persistenceIdentifier && array_key_exists($formMetadata->persistenceIdentifier, $allReferencesForFormDefinitionUid)) {
+                $referenceCount = $allReferencesForFormDefinitionUid[$formMetadata->persistenceIdentifier];
             } elseif ($formMetadata->persistenceIdentifier && array_key_exists($formMetadata->persistenceIdentifier, $allReferencesForPersistenceIdentifier)) {
                 $referenceCount = $allReferencesForPersistenceIdentifier[$formMetadata->persistenceIdentifier];
             }
@@ -427,7 +399,6 @@ class FormManagerController extends ActionController
                 $formMetadata = $formMetadata->withReferenceCount($referenceCount);
             }
 
-            // Add edit URL to form metadata
             if ($formMetadata->persistenceIdentifier && !$formMetadata->invalid && !$formMetadata->readOnly) {
                 $editUrl = (string)$this->coreUriBuilder->buildUriFromRoute(
                     'form_editor',
@@ -435,6 +406,9 @@ class FormManagerController extends ActionController
                 );
                 $formMetadata = $formMetadata->withEditUrl($editUrl);
             }
+
+            $actions = $this->getRecordActions($formMetadata->persistenceIdentifier);
+            $formMetadata = $formMetadata->withActions($actions);
 
             if ($searchCriteria->searchTerm === ''
                 || $this->valueContainsSearchTerm($formMetadata->name, $searchCriteria->searchTerm)
@@ -516,6 +490,30 @@ class FormManagerController extends ActionController
             $isValid = false;
         }
         return $isValid;
+    }
+
+    /**
+     * Returns the record actions
+     *
+     * @return array
+     * @throws RouteNotFoundException
+     */
+    protected function getRecordActions(string $persistenceIdentifier): array
+    {
+        if (!MathUtility::canBeInterpretedAsInteger($persistenceIdentifier)) {
+            return [];
+        }
+
+        $actions = [];
+
+        // History button
+        $urlParameters = [
+            'element' => FormDefinitionRepository::TABLE_NAME . ':' . $persistenceIdentifier,
+            'returnUrl' => $this->request->getAttribute('normalizedParams')->getRequestUri(),
+        ];
+        $actions['recordHistoryUrl'] = (string)$this->coreUriBuilder->buildUriFromRoute('record_history', $urlParameters);
+
+        return $actions;
     }
 
     /**
