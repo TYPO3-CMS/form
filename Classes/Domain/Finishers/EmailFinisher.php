@@ -144,6 +144,23 @@ class EmailFinisher extends AbstractFinisher
             $mail->assign('languageKey', $this->options['translation']['language']);
         }
 
+        $message = $this->parseOption('message');
+        if (is_string($message) && $message !== '') {
+            // Remove whitespace between HTML tags to prevent lib.parseFunc_RTE
+            // from converting newlines into additional blank lines in the email output
+            $message = preg_replace('/>\s+</', '><', $message);
+            $placeholderPos = strpos($message, '{formValues}');
+            if ($placeholderPos !== false) {
+                $mail->assign('messageBefore', substr($message, 0, $placeholderPos));
+                $mail->assign('messageAfter', substr($message, $placeholderPos + strlen('{formValues}')));
+            } else {
+                // No placeholder - show message only, no form values
+                $mail->assign('messageBefore', $message);
+                $mail->assign('messageAfter', '');
+                $mail->assign('hideFormValues', true);
+            }
+        }
+
         if ($attachUploads) {
             foreach ($formRuntime->getFormDefinition()->getRenderablesRecursively() as $element) {
                 if (!$element instanceof FileUpload) {

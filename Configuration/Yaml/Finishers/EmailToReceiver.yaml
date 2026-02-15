@@ -24,10 +24,17 @@ prototypes:
               translation:
                 language: ''
               title: ''
+              message: ''
               errorMessage: ''
         FormEngine:
           label: tt_content.finishersDefinition.EmailToReceiver.label
           elements:
+            message:
+              label: tt_content.finishersDefinition.EmailToReceiver.message.label
+              config:
+                type: text
+                enableRichtext: true
+                richtextConfiguration: form-content
             subject:
               label: tt_content.finishersDefinition.EmailToReceiver.subject.label
               config:

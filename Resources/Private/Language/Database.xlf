@@ -111,6 +111,9 @@
       <trans-unit id="tt_content.finishersDefinition.EmailToSender.language.1">
         <source>EN</source>
       </trans-unit>
+      <trans-unit id="tt_content.finishersDefinition.EmailToSender.message.label">
+        <source>Message</source>
+      </trans-unit>
       <trans-unit id="tt_content.finishersDefinition.EmailToSender.title.label">
         <source>Title</source>
       </trans-unit>
@@ -149,6 +152,9 @@
       </trans-unit>
       <trans-unit id="tt_content.finishersDefinition.EmailToReceiver.language.1">
         <source>EN</source>
+      </trans-unit>
+      <trans-unit id="tt_content.finishersDefinition.EmailToReceiver.message.label">
+        <source>Message</source>
       </trans-unit>
       <trans-unit id="tt_content.finishersDefinition.EmailToReceiver.title.label">
         <source>Title</source>
@@ -639,6 +645,12 @@
       <trans-unit id="formEditor.elements.Form.finisher.EmailToSender.editor.subject.label">
         <source>Subject</source>
       </trans-unit>
+      <trans-unit id="formEditor.elements.Form.finisher.EmailToSender.editor.message.label">
+        <source>Message</source>
+      </trans-unit>
+      <trans-unit id="formEditor.elements.Form.finisher.EmailToSender.editor.message.description">
+        <source>Optional custom message. Use {formValues} as a placeholder to include the submitted form data at that position. If empty, only the form data table will be shown.</source>
+      </trans-unit>
       <trans-unit id="formEditor.elements.Form.finisher.EmailToSender.editor.recipients.label">
         <source>Recipients</source>
       </trans-unit>
@@ -716,6 +728,12 @@
       </trans-unit>
       <trans-unit id="formEditor.elements.Form.finisher.EmailToReceiver.editor.subject.label">
         <source>Subject</source>
+      </trans-unit>
+      <trans-unit id="formEditor.elements.Form.finisher.EmailToReceiver.editor.message.label">
+        <source>Message</source>
+      </trans-unit>
+      <trans-unit id="formEditor.elements.Form.finisher.EmailToReceiver.editor.message.description">
+        <source>Optional custom message. Use {formValues} once as a placeholder to include the submitted form data at that position (only the first occurrence is replaced). If empty, only the form data table will be shown.</source>
       </trans-unit>
       <trans-unit id="formEditor.elements.Form.finisher.EmailToReceiver.editor.recipients.label">
         <source>Recipients</source>

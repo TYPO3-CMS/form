@@ -279,10 +279,16 @@ class FormDefinitionConversionService
             }
         }
 
-        // Extract from finishers definition (global finisher definitions)
-        $finishersDefinition = $prototypeConfiguration['finishersDefinition'] ?? [];
-        foreach ($finishersDefinition as $finisherIdentifier => $finisherConfig) {
-            $editors = $finisherConfig['formEditor']['editors'] ?? [];
+        // Extract from finisher property collections on the Form element
+        // Finisher editors are defined in:
+        // formElementsDefinition.Form.formEditor.propertyCollections.finishers.<index>.editors
+        $finisherCollections = $formElementsDefinition['Form']['formEditor']['propertyCollections']['finishers'] ?? [];
+        foreach ($finisherCollections as $finisherCollection) {
+            $finisherIdentifier = $finisherCollection['identifier'] ?? '';
+            if ($finisherIdentifier === '') {
+                continue;
+            }
+            $editors = $finisherCollection['editors'] ?? [];
             foreach ($editors as $editor) {
                 if ($this->isRteEditor($editor)) {
                     $propertyPath = $editor['propertyPath'] ?? '';

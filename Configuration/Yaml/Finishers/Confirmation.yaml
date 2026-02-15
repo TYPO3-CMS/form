@@ -42,3 +42,5 @@ prototypes:
               label: tt_content.finishersDefinition.Confirmation.message.label
               config:
                 type: text
+                enableRichtext: true
+                richtextConfiguration: form-content

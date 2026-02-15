@@ -82,6 +82,14 @@ prototypes:
                     propertyValidators:
                       10: NotEmpty
                       20: FormElementIdentifierWithinCurlyBracesInclusive
+                  250:
+                    identifier: message
+                    templateName: Inspector-TextareaEditor
+                    label: formEditor.elements.Form.finisher.EmailToSender.editor.message.label
+                    propertyPath: options.message
+                    description: formEditor.elements.Form.finisher.EmailToSender.editor.message.description
+                    enableRichtext: true
+                    richtextConfiguration: form-content
                   350:
                     identifier: recipients
                     templateName: Inspector-PropertyGridEditor
@@ -228,6 +236,14 @@ prototypes:
                     propertyValidators:
                       10: NotEmpty
                       20: FormElementIdentifierWithinCurlyBracesInclusive
+                  250:
+                    identifier: message
+                    templateName: Inspector-TextareaEditor
+                    label: formEditor.elements.Form.finisher.EmailToReceiver.editor.message.label
+                    propertyPath: options.message
+                    description: formEditor.elements.Form.finisher.EmailToReceiver.editor.message.description
+                    enableRichtext: true
+                    richtextConfiguration: form-content
                   350:
                     identifier: recipients
                     templateName: Inspector-PropertyGridEditor
@@ -431,6 +447,7 @@ prototypes:
                     propertyPath: options.message
                     description: formEditor.elements.Form.finisher.Confirmation.editor.message.description
                     enableRichtext: true
+                    richtextConfiguration: form-content
                   9999:
                     identifier: removeButton
                     templateName: Inspector-RemoveElementEditor

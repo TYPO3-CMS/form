@@ -4,6 +4,8 @@
 <f:layout name="SystemEmail" />
 <f:section name="Title">{title}</f:section>
 <f:section name="Main">
+    <f:if condition="{messageBefore}">{messageBefore -> f:sanitize.html() -> f:format.html()}</f:if>
+    <f:if condition="!{hideFormValues}">
     <table>
         <formvh:renderAllFormValues renderable="{form.formDefinition}" as="formValue">
             <tr>
@@ -45,5 +47,7 @@
             </tr>
         </formvh:renderAllFormValues>
     </table>
+    </f:if>
+    <f:if condition="{messageAfter}">{messageAfter -> f:sanitize.html() -> f:format.html()}</f:if>
 </f:section>
 </html>
