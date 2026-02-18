@@ -48,6 +48,9 @@
       <trans-unit id="formManager.newFormWizard.step1.title">
         <source>Create new form</source>
       </trans-unit>
+      <trans-unit id="formManager.newFormWizard.step.modes.summary.title">
+        <source>Mode</source>
+      </trans-unit>
       <trans-unit id="formManager.newFormWizard.step1.progressLabel">
         <source>Choose</source>
       </trans-unit>
@@ -134,6 +137,12 @@
       </trans-unit>
       <trans-unit id="formManager.predefinedForm.description">
         <source>Create a new form and use an existing form template for it.</source>
+      </trans-unit>
+      <trans-unit id="formManager.finisher.redirect.success.title">
+        <source>Form created</source>
+      </trans-unit>
+      <trans-unit id="formManager.finisher.redirect.success.description">
+        <source>The form has been successfully created. You will be redirected to the new form.</source>
       </trans-unit>
     </body>
   </file>
