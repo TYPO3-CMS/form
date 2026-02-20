@@ -17,8 +17,8 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Form\Tests\Unit\Service;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use TYPO3\CMS\Form\Service\FormDefinitionMigrationService;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -30,7 +30,7 @@ final class FormDefinitionMigrationServiceTest extends UnitTestCase
     protected bool $resetSingletonInstances = true;
 
     #[Test]
-    #[WithoutErrorHandler]
+    #[IgnoreDeprecations]
     public function migrateConvertsFieldExplanationTextToDescription(): void
     {
         $migrationService = new FormDefinitionMigrationService();
