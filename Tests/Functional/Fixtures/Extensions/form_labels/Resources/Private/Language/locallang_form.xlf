@@ -18,6 +18,9 @@
       <trans-unit id="form-runtime-identifier.element.form-element-identifier.properties.placeholder">
         <source>form-runtime-identifier form-element-identifier PLACEHOLDER EN</source>
       </trans-unit>
+      <trans-unit id="form-runtime-identifier.element.form-element-identifier.properties.defaultValue">
+        <source>form-runtime-identifier form-element-identifier DEFAULTVALUE EN</source>
+      </trans-unit>
       <trans-unit id="form-runtime-identifier.element.form-element-identifier-page.renderingOptions.nextButtonLabel">
         <source>form-runtime-identifier form-element-identifier nextButtonLabel EN</source>
       </trans-unit>

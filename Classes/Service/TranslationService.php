@@ -250,6 +250,8 @@ class TranslationService implements SingletonInterface
 
         if ($property === 'label') {
             $defaultValue = $element->getLabel();
+        } elseif ($property === 'defaultValue' && $element instanceof FormElementInterface) {
+            $defaultValue = $element->getDefaultValue();
         } else {
             if ($element instanceof FormElementInterface) {
                 try {

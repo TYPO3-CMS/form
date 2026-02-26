@@ -18,6 +18,15 @@
       <trans-unit id="form-runtime-identifier.element.form-element-identifier.properties.placeholder">
         <source>form-element-identifier PLACEHOLDER EN</source>
       </trans-unit>
+      <trans-unit id="form-runtime-identifier.element.form-element-identifier.properties.defaultValue">
+        <source>form-element-identifier DEFAULTVALUE EN</source>
+      </trans-unit>
+      <trans-unit id="element.form-element-identifier.properties.defaultValue">
+        <source>form-element-identifier DEFAULTVALUE EN 1</source>
+      </trans-unit>
+      <trans-unit id="element.Text.properties.defaultValue">
+        <source>form-element-identifier DEFAULTVALUE EN 2</source>
+      </trans-unit>
       <trans-unit id="form-runtime-identifier.element.form-element-identifier-page.renderingOptions.nextButtonLabel">
         <source>form-element-identifier nextButtonLabel EN</source>
       </trans-unit>

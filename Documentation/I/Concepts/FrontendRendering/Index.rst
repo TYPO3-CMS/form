@@ -132,6 +132,7 @@ property value will be displayed unmodified.
 The following properties can be translated:
 
 *   label
+*   defaultValue (scalar values only; array values, e.g. for :yaml:`MultiCheckbox`, are not translated)
 *   properties.[*]
 *   properties.options.[*]
 *   properties.fluidAdditionalAttributes.[*]
@@ -207,6 +208,13 @@ translation keys in the translation files:
     (*element.<elementType>.properties.<propertyName>*)
 
 If none of these keys exist, 'Last name' will be displayed.
+
+The :yaml:`defaultValue` of `LastName` can be translated with the same fallback chain,
+using ``properties.defaultValue`` as the property name:
+
+*   `ApplicationForm.element.LastName.properties.defaultValue`
+*   `element.LastName.properties.defaultValue`
+*   `element.Text.properties.defaultValue`
 
 In order to translate the form element `Software`, the process will look for the following
 translation keys in the translation files:
