@@ -30,6 +30,8 @@ use TYPO3\CMS\Form\ViewHelpers\RenderRenderableViewHelper;
  * Displays two select-boxes for hour and minute selection.
  *
  * Scope: frontend
+ *
+ * @deprecated since v14, will be removed in v15.
  */
 final class TimePickerViewHelper extends AbstractFormFieldViewHelper
 {
@@ -57,6 +59,11 @@ final class TimePickerViewHelper extends AbstractFormFieldViewHelper
      */
     public function render(): string
     {
+        trigger_error(
+            'The TimePickerViewHelper is deprecated since TYPO3 v14 and will be removed in v15.',
+            E_USER_DEPRECATED
+        );
+
         $name = $this->getName();
         $this->registerFieldNameForFormTokenGeneration($name);
         $this->tag->addAttribute('name', $name . '[hour]');

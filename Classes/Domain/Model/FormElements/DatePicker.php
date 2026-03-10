@@ -25,6 +25,8 @@ namespace TYPO3\CMS\Form\Domain\Model\FormElements;
  * A date picker form element
  *
  * Scope: frontend
+ *
+ * @deprecated since v14, will be removed in v15. Use the "Date" form element instead.
  */
 class DatePicker extends AbstractFormElement implements StringableFormElementInterface
 {
@@ -34,6 +36,10 @@ class DatePicker extends AbstractFormElement implements StringableFormElementInt
      */
     public function initializeFormElement()
     {
+        trigger_error(
+            'The form element type "DatePicker" is deprecated since TYPO3 v14 and will be removed in v15. Use the "Date" form element type instead.',
+            E_USER_DEPRECATED
+        );
         $this->setDataType(\DateTime::class);
     }
 

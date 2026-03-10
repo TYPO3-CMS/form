@@ -34,6 +34,8 @@ use TYPO3\CMS\Form\ViewHelpers\RenderRenderableViewHelper;
  * Note: Requires jQuery UI to be included on the page.
  *
  * Scope: frontend
+ *
+ * @deprecated since v14, will be removed in v15. Use the native HTML5 date input (Date form element) instead.
  */
 final class DatePickerViewHelper extends AbstractFormFieldViewHelper
 {
@@ -69,6 +71,11 @@ final class DatePickerViewHelper extends AbstractFormFieldViewHelper
      */
     public function render(): string
     {
+        trigger_error(
+            'The DatePickerViewHelper is deprecated since TYPO3 v14 and will be removed in v15. Use the native HTML5 date input (Date form element) instead.',
+            E_USER_DEPRECATED
+        );
+
         $enableDatePicker = $this->arguments['enableDatePicker'];
         $dateFormat = $this->arguments['dateFormat'];
         $previewMode = (bool)$this->arguments['previewMode'];
