@@ -191,18 +191,23 @@ templates and how the corresponding JavaScript code are executed :ref:`here <api
 
 The form element inline HTML templates and the corresponding JavaScript code
 are configured for reuse. In this way, most form elements you create should be
-able to access the components delivered in EXT:form, without requiring separate
-implementations (at least we hope so). For your own implementations, study
-EXT:form stage templates, which is found under ``Resources/Private/Backend/Partials/FormEditor/Stage/*``.
-The corresponding JavaScript code is found under ``Resources/Public/JavaScript/Backend/FormEditor/StageComponent.js``.
-The method ``_renderTemplateDispatcher()`` shows, which methods will be used to
-render the respective form elements.
+able to access the components delivered in EXT:form, without requiring separate.
+The recommended approach for custom form elements is to omit
+:yaml:`formEditorPartials` entirely. The form editor will then automatically
+render the element using the built-in :html:`<typo3-form-form-element-stage-item>`
+web component, which handles labels, validators, select options, allowed MIME
+types and the toolbar out of the box without any additional JavaScript code.
 
-Essentially, two different inline HTML templates exists that can be rendered
-with two different JavaScript methods, which are described below. The other
-inline HTML templates are almost all versions of these two basic variants and
-show extra/ other form-element information. The same applies to the
-corresponding JavaScript codes.
+If you need fully custom stage rendering, you can still provide a Fluid
+template via :yaml:`formEditorPartials` and handle the
+:ref:`view/stage/abstract/render/template/perform <apireference-formeditor-basicjavascriptconcepts-events-view-stage-abstract-render-template-perform>`
+event in a custom JavaScript module to manipulate the cloned template element.
+EXT:form's own stage templates are located under
+``Resources/Private/Backend/Partials/FormEditor/Stage/``.
+
+The following two legacy inline HTML templates are still shipped by EXT:form
+for backwards compatibility, but their associated JavaScript rendering helpers
+are deprecated since TYPO3 v14.2 (see below).
 
 
 .. _apireference-formeditor-stage-commonabstractformelementtemplates-simpletemplate:
@@ -219,6 +224,12 @@ be enough for all possible, self-defined form elements.
 
 The ``Stage/SimpleTemplate`` can then :ref:`be rendered <apireference-formeditor-basicjavascriptconcepts-events-view-stage-abstract-render-template-perform>`
 with the method ``getFormEditorApp().getViewModel().getStage().renderSimpleTemplateWithValidators()``.
+
+..  deprecated:: 14.2
+    ``renderSimpleTemplateWithValidators()`` is deprecated and will be removed in TYPO3 v15.
+    Use the built-in ``<typo3-form-form-element-stage-item>`` web component by omitting
+    :yaml:`formEditorPartials`, or implement custom DOM manipulation in the
+    :js:`view/stage/abstract/render/template/perform` subscriber instead.
 
 
 .. _apireference-formeditor-stage-commonabstractformelementtemplates-selecttemplate:
@@ -280,6 +291,12 @@ read out of the form element and then shown in the template.
 
 The ``Stage/SelectTemplate`` can then :ref:`be rendered <apireference-formeditor-basicjavascriptconcepts-events-view-stage-abstract-render-template-perform>`
 with the method ``getFormEditorApp().getViewModel().getStage().renderSelectTemplates()``.
+
+..  deprecated:: 14.2
+    ``renderSelectTemplates()`` is deprecated and will be removed in TYPO3 v15.
+    Use the built-in ``<typo3-form-form-element-stage-item>`` web component by omitting
+    :yaml:`formEditorPartials`, or implement custom DOM manipulation in the
+    :js:`view/stage/abstract/render/template/perform` subscriber instead.
 
 
 .. _apireference-formeditor-basicjavascriptconcepts:
@@ -1697,283 +1714,115 @@ Subscribe to the event:
 view/stage/abstract/render/template/perform
 +++++++++++++++++++++++++++++++++++++++++++
 
-The methods ``getFormEditorApp().getViewModel().renderAbstractStageArea()``
-call this event. Strictly speaking, the ``Stage`` component in the method
-``_renderTemplateDispatcher()`` calls this event. The ``form editor`` requires
-for each form element an inline HTML template the corresponding JavaScript
-code. Information matching inline HTML templates to the appropriate form
-elements must be configured within :ref:`prototypes.prototypeIdentifier.formeditor.formEditorPartials <prototypes.prototypeIdentifier.formeditor.formeditorpartials>`.
-At this point, the key identifying the form element follows a convention:
-``FormElement-<formElementTypeIdentifier>``. The value for the key tells the
-``form editor`` which inline HTML template should be loaded for the respective
-form element. The ``_renderTemplateDispatcher()`` method then identifies, by
-means of the form element's ``<formElementTypeIdentifier>``, the corresponding
-JavaScript code to fill the inline HTML template with life.
-``_renderTemplateDispatcher()`` contains a hard-coded list with the
-``<formElementTypeIdentifier>`` that is brought in with the EXT:form, and it
-renders the inline HTML templates accordingly. At the end, the
-``view/stage/abstract/render/template/perform`` event is called. If you wish to
-implement your own form element and show it in the ``form editor``, this event
-can be used to execute in :ref:`your own JavaScript module <concepts-formeditor-basicjavascriptconcepts-registercustomjavascriptmodules>`
-the corresponding JavaScript code, with the help of the ``<formElementTypeIdentifier>``.
-This is generally enough to allow the ``Stage/SimpleTemplate`` and/ or
-``Stage/SelectTemplate`` inline HTML template to be rendered for your own form
-element and, in the JavaScript code, to access the ``getFormEditorApp().getViewModel().getStage().renderSimpleTemplateWithValidators()``
-and/ or ``getFormEditorApp().getViewModel().getStage().renderSelectTemplates()``
-method delivered with EXT:form. An overview over the functionality of the
-formEditorPartials for the ``<formElementTypeIdentifier>`` and its JavaScript
-code is found :ref:`here <apireference-formeditor-stage-commonabstractformelementtemplates>`.
+This event is dispatched by the ``Stage`` component during rendering of the
+abstract stage area. It is **only** dispatched for form elements that have a
+:yaml:`formEditorPartials` entry (e.g. ``FormElement-<formElementTypeIdentifier>``)
+in the prototype configuration. Form elements **without** a
+:yaml:`formEditorPartials` entry are automatically rendered using the built-in
+:html:`<typo3-form-form-element-stage-item>` web component — no JavaScript
+subscriber is needed for those.
+
+If you provide a :yaml:`formEditorPartials` entry for your custom form element,
+subscribe to this event in your JavaScript module to populate the cloned Fluid
+template with the form element's data. The subscriber receives the
+:js:`FormElement` object and the cloned :js:`HTMLElement` template as arguments.
+
+..  note::
+    The helper functions ``renderSimpleTemplateWithValidators()``,
+    ``renderSelectTemplates()`` and related methods from
+    :js:`@typo3/form/backend/form-editor/stage-component` are deprecated since
+    TYPO3 v14.2. Implement custom DOM manipulation in your subscriber instead,
+    or migrate to the web component approach by omitting :yaml:`formEditorPartials`.
+    See Deprecation #109306.
 
 Subscribe to the event:
 
 .. code-block:: javascript
 
-   /**
-    * @private
-    *
-    * @param string
-    * @param array
-    *              args[0] = formElement
-    *              args[1] = template
-    * @return void
-    */
    getPublisherSubscriber().subscribe('view/stage/abstract/render/template/perform', function(topic, args) {
+       const formElement = args[0]; // FormElement object
+       const template    = args[1]; // cloned HTMLElement from the Fluid partial
    });
 
-A simple example reusing the EXT:form inline HTML template ``Stage/SelectTemplate`` and the EXT:form JavaScript code ``renderSelectTemplates()``
-for a custom form element with ``<formElementTypeIdentifier>`` = 'GenderSelect'.
-In this example, 'GenderSelect' is basically a radio button form element with some predefined options.
+A minimal example for a custom form element ``MyCustomElement`` with a dedicated
+stage template. The template is a plain HTML partial; the subscriber populates
+it via DOM manipulation.
+
+**Fluid partial** (:file:`EXT:my_extension/Resources/Private/Backend/Partials/FormEditor/Stage/MyCustomElement.html`):
+
+.. code-block:: html
+
+   <div class="formeditor-element-body">
+       <div class="formeditor-element-info">
+           <div data-identifier="elementLabel"></div>
+           <div data-identifier="elementSummary"></div>
+       </div>
+   </div>
+
+**Extension importmap** (:file:`EXT:my_extension/Configuration/JavaScriptModules.php`):
+
+The JavaScript module must be registered.
+
+.. code-block:: php
+
+   <?php
+   return [
+       'dependencies' => ['form',],
+       'imports' => [
+           '@vendor/my-extension/' =>
+               'EXT:my_extension/Resources/Public/JavaScript/',
+       ],
+   ];
+
+**Prototype YAML configuration:**
 
 .. code-block:: yaml
-   :emphasize-lines: 8
 
    prototypes:
      standard:
        formEditor:
          dynamicJavaScriptModules:
            additionalViewModelModules:
-             10: '@typo3/my-site-package/backend/form-editor/view-model.js'
+             10: '@vendor/my-extension/backend/form-editor/view-model.js'
          formEditorPartials:
-           FormElement-GenderSelect: 'Stage/SelectTemplate'
-       formElementsDefinition:
-         GenderSelect:
-           renderingOptions:
-             templateName: 'RadioButton'
-           properties:
-             options:
-               f: 'Female'
-               m: 'Male'
-               u: 'Unicorn'
-               a: 'Alien'
-           formEditor:
-             label: 'Gender Select'
-             group: select
-             groupSorting: 9000
-             predefinedDefaults:
-               properties:
-                 options:
-                   f: 'Female'
-                   m: 'Male'
-                   u: 'Unicorn'
-                   a: 'Alien'
-             editors:
-               100:
-                 identifier: header
-                 templateName: Inspector-FormElementHeaderEditor
-               200:
-                 identifier: label
-                 templateName: Inspector-TextEditor
-                 label: formEditor.elements.FormElement.editor.label.label
-                 propertyPath: label
-               230:
-                 identifier: elementDescription
-                 templateName: Inspector-TextEditor
-                 label: formEditor.elements.FormElement.editor.elementDescription.label
-                 propertyPath: properties.elementDescription
-               700:
-                 identifier: gridColumnViewPortConfiguration
-                 templateName: Inspector-GridColumnViewPortConfigurationEditor
-                 label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.label
-                 configurationOptions:
-                   viewPorts:
-                     10:
-                       viewPortIdentifier: xs
-                       label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.xs.label
-                     20:
-                       viewPortIdentifier: sm
-                       label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.sm.label
-                     30:
-                       viewPortIdentifier: md
-                       label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.md.label
-                     40:
-                       viewPortIdentifier: lg
-                       label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.lg.label
-                     50:
-                       viewPortIdentifier: xl
-                       label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.xl.label
-                     60:
-                       viewPortIdentifier: xxl
-                       label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.xxl.label
-                   numbersOfColumnsToUse:
-                     label: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.numbersOfColumnsToUse.label
-                     propertyPath: 'properties.gridColumnClassAutoConfiguration.viewPorts.{@viewPortIdentifier}.numbersOfColumnsToUse'
-                     description: formEditor.elements.FormElement.editor.gridColumnViewPortConfiguration.numbersOfColumnsToUse.description
-               800:
-                 identifier: requiredValidator
-                 templateName: Inspector-RequiredValidatorEditor
-                 label: formEditor.elements.FormElement.editor.requiredValidator.label
-                 validatorIdentifier: NotEmpty
-                 propertyPath: properties.fluidAdditionalAttributes.required
-                 propertyValue: required
-                 configurationOptions:
-                   validationErrorMessage:
-                     label: formEditor.elements.FormElement.editor.requiredValidator.validationErrorMessage.label
-                     propertyPath: properties.validationErrorMessages
-                     description: formEditor.elements.FormElement.editor.requiredValidator.validationErrorMessage.description
-                     errorCodes:
-                       10: 1221560910
-                       20: 1221560718
-                       30: 1347992400
-                       40: 1347992453
-               9999:
-                 identifier: removeButton
-                 templateName: Inspector-RemoveElementEditor
+           FormElement-MyCustomElement: 'Stage/MyCustomElement'
+
+**JavaScript module** (:file:`EXT:my_extension/Resources/Public/JavaScript/backend/form-editor/view-model.js`):
 
 .. code-block:: javascript
-   :emphasize-lines: 105-109
 
-   /**
-    * Module: @typo3/my-site-package/backend/form-editor/view-model
-    */
-   define(['jquery',
-           'TYPO3/CMS/Form/Backend/FormEditor/Helper'
-           ], function($, Helper) {
-           'use strict';
+   let _formEditorApp = null;
 
-       return (function($, Helper) {
+   export function bootstrap(formEditorApp) {
+       _formEditorApp = formEditorApp;
 
-           /**
-            * @private
-            *
-            * @var object
-            */
-           var _formEditorApp = null;
+       _formEditorApp.getPublisherSubscriber().subscribe(
+           'view/stage/abstract/render/template/perform',
+           function (topic, args) {
+               const [formElement, template] = args;
+               if (formElement.get('type') !== 'MyCustomElement') {
+                   return;
+               }
 
-           /**
-            * @private
-            *
-            * @return object
-            */
-           function getFormEditorApp() {
-               return _formEditorApp;
-           };
+               const labelEl = template.querySelector('[data-identifier="elementLabel"]');
+               if (labelEl) {
+                   labelEl.textContent = formElement.get('label') || formElement.get('identifier');
+               }
 
-           /**
-            * @private
-            *
-            * @return object
-            */
-           function getPublisherSubscriber() {
-               return getFormEditorApp().getPublisherSubscriber();
-           };
+               const summaryEl = template.querySelector('[data-identifier="elementSummary"]');
+               if (summaryEl) {
+                   summaryEl.textContent = formElement.get('properties.myCustomProperty') ?? '';
+               }
+           }
+       );
+   }
 
-           /**
-            * @private
-            *
-            * @return object
-            */
-           function getUtility() {
-               return getFormEditorApp().getUtility();
-           };
-
-           /**
-            * @private
-            *
-            * @param object
-            * @return object
-            */
-           function getHelper() {
-               return Helper;
-           };
-
-           /**
-            * @private
-            *
-            * @return object
-            */
-           function getCurrentlySelectedFormElement() {
-               return getFormEditorApp().getCurrentlySelectedFormElement();
-           };
-
-           /**
-            * @private
-            *
-            * @param mixed test
-            * @param string message
-            * @param int messageCode
-            * @return void
-            */
-           function assert(test, message, messageCode) {
-               return getFormEditorApp().assert(test, message, messageCode);
-           };
-
-           /**
-            * @private
-            *
-            * @return void
-            * @throws 1491643380
-            */
-           function _helperSetup() {
-               assert('function' === $.type(Helper.bootstrap),
-                   'The view model helper does not implement the method "bootstrap"',
-                   1491643380
-               );
-               Helper.bootstrap(getFormEditorApp());
-           };
-
-           /**
-            * @private
-            *
-            * @return void
-            */
-           function _subscribeEvents() {
-               /**
-                * @private
-                *
-                * @param string
-                * @param array
-                *              args[0] = formElement
-                *              args[1] = template
-                * @return void
-                */
-               getPublisherSubscriber().subscribe('view/stage/abstract/render/template/perform', function(topic, args) {
-                   if (args[0].get('type') === 'GenderSelect') {
-                       getFormEditorApp().getViewModel().getStage().renderSelectTemplates(args[0], args[1]);
-                   }
-               });
-           };
-
-           /**
-            * @public
-            *
-            * @param object formEditorApp
-            * @return void
-            */
-           function bootstrap(formEditorApp) {
-               _formEditorApp = formEditorApp;
-               _helperSetup();
-               _subscribeEvents();
-           };
-
-           /**
-            * Publish the public methods.
-            * Implements the "Revealing Module Pattern".
-            */
-           return {
-               bootstrap: bootstrap
-           };
-       })($, Helper);
-   });
+..  note::
+    For form elements whose stage display only requires a label, validators,
+    options or allowed MIME types, the built-in
+    :html:`<typo3-form-form-element-stage-item>` web component covers all of
+    that without any JavaScript — simply omit :yaml:`formEditorPartials`.
+    See Feature #107058.
 
 
 .. _apireference-formeditor-basicjavascriptconcepts-events-view-stage-element-clicked:
