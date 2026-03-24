@@ -54,6 +54,27 @@ final readonly class DatabasePermissionChecker
     }
 
     /**
+     * Assert that the current backend user has read permissions for the page
+     * a given form record is stored on.
+     *
+     * @throws PersistenceManagerException
+     */
+    public function assertReadAccessForRecord(int $uid, ?array $record): void
+    {
+        $pid = (int)($record['pid'] ?? throw new PersistenceManagerException(
+            sprintf('The form with uid "%d" has no valid pid.', $uid),
+            1774364028
+        ));
+
+        if (!$this->hasReadPermission($pid)) {
+            throw new PersistenceManagerException(
+                sprintf('Access denied: You do not have permission to access forms on page "%d".', $pid),
+                1774364031
+            );
+        }
+    }
+
+    /**
      * Check if the current backend user has write permissions for the given page
      */
     public function hasWritePermission(int $pageId): bool
@@ -81,7 +102,7 @@ final readonly class DatabasePermissionChecker
 
         if (!$this->hasWritePermission($pid)) {
             throw new PersistenceManagerException(
-                sprintf('Access denied: You do not have permission to access forms on page "%d".', $pid),
+                sprintf('Access denied: You do not have permission to persist forms on page "%d".', $pid),
                 1767199442
             );
         }
