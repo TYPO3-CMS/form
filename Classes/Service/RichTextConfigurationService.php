@@ -306,7 +306,7 @@ class RichTextConfigurationService
     /**
      * Resolves a system resource to an absolute web URL.
      *
-     * @param string $value The resource path (e.g., 'EXT:my_ext/Resources/Public/Css/file.css')
+     * @param string $value The resource path (e.g., 'EXT:my_extension/Resources/Public/Css/file.css')
      * @return string The public web URL to the resource
      */
     private function resolveUrlPath(string $value): string

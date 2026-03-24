@@ -28,6 +28,9 @@ use TYPO3\CMS\Form\Service\FormDefinitionMigrationService;
 /**
  * Extend the ExtbaseConfigurationManager to read YAML configurations.
  *
+ * YAML files are discovered automatically from every active extension's
+ * Configuration/Form/<SetName>/ directory (see {@see \TYPO3\CMS\Form\DependencyInjection\FormYamlCollectorConfigurator}).
+ *
  * Scope: frontend / backend
  * @internal
  */
@@ -40,27 +43,42 @@ readonly class ConfigurationManager implements ExtFormConfigurationManagerInterf
         private FrontendInterface $cache,
         private TypoScriptService $typoScriptService,
         private FormDefinitionMigrationService $migrationService,
+        private FormYamlCollector $formYamlCollector,
     ) {}
 
     /**
-     * Load and parse YAML files which are configured within the TypoScript
-     * path plugin.tx_extensionkey.settings.yamlConfigurations
+     * Load and parse YAML files for the current rendering context.
      *
-     * The following steps will be done:
+     * Files are resolved via auto-discovery: {@see FormYamlCollector} scans every
+     * active extension's Configuration/Form/<SetName>/ directory and returns
+     * all paths sorted by priority.
      *
-     * * Convert each singe YAML file into an array
-     * * merge this arrays together
-     * * resolve all declared inheritances
-     * * remove all keys if their values are NULL
-     * * return all configuration paths within TYPO3.CMS
-     * * sort by array keys, if all keys within the current nesting level are numerical keys
-     * * resolve possible TypoScript settings in FE mode
+     * Legacy TypoScript-based paths from {@code yamlConfigurations} are still
+     * honoured during the deprecation period (TYPO3 v14.2–v15.0) and merged
+     * after the auto-discovered paths.
+     *
+     * The following post-processing steps are applied to the merged configuration:
+     *
+     * * Resolve all declared inheritances
+     * * Remove all keys whose values are NULL
+     * * Sort by array keys if all keys within a nesting level are numerical
+     * * Resolve possible TypoScript settings in FE mode
      */
     public function getYamlConfiguration(array $typoScriptSettings, bool $isFrontend, ?ServerRequestInterface $request = null): array
     {
-        $yamlSettingsFilePaths = isset($typoScriptSettings['yamlConfigurations'])
-            ? ArrayUtility::sortArrayWithIntegerKeys($typoScriptSettings['yamlConfigurations'])
-            : [];
+        $yamlSettingsFilePaths = $this->formYamlCollector->getPaths();
+        if (isset($typoScriptSettings['yamlConfigurations']) && $typoScriptSettings['yamlConfigurations'] !== []) {
+            trigger_error(
+                'TypoScript-based registration of form YAML files via plugin.tx_form.settings.yamlConfigurations'
+                . ' or module.tx_form.settings.yamlConfigurations has been deprecated in TYPO3 v14.2 and will'
+                . ' be removed in TYPO3 v15.0. Use the auto-discovery directory convention'
+                . ' EXT:my_extension/Configuration/Form/<SetName>/config.yaml instead.',
+                E_USER_DEPRECATED
+            );
+            $legacyPaths = ArrayUtility::sortArrayWithIntegerKeys($typoScriptSettings['yamlConfigurations']);
+            $legacyPaths = array_filter($legacyPaths, static fn(string $path): bool => !in_array($path, $yamlSettingsFilePaths, true));
+            $yamlSettingsFilePaths = array_merge($yamlSettingsFilePaths, array_values($legacyPaths));
+        }
         $cacheKey = strtolower('YamlSettings_form' . md5(json_encode($yamlSettingsFilePaths)));
         if ($this->cache->has($cacheKey)) {
             $yamlSettings = $this->cache->get($cacheKey);

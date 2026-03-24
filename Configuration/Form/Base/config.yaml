@@ -1,56 +1,63 @@
 imports:
-    - { resource: './Validators/NotEmpty.yaml' }
-    - { resource: './Validators/DateTime.yaml' }
-    - { resource: './Validators/Alphanumeric.yaml' }
-    - { resource: './Validators/Text.yaml' }
-    - { resource: './Validators/StringLength.yaml' }
-    - { resource: './Validators/EmailAddress.yaml' }
-    - { resource: './Validators/Integer.yaml' }
-    - { resource: './Validators/Float.yaml' }
-    - { resource: './Validators/Number.yaml' }
-    - { resource: './Validators/NumberRange.yaml' }
-    - { resource: './Validators/RegularExpression.yaml' }
-    - { resource: './Validators/Count.yaml' }
-    - { resource: './Validators/FileSize.yaml' }
-    - { resource: './Validators/DateRange.yaml' }
+  # Validators
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/NotEmpty.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/DateTime.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/Alphanumeric.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/Text.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/StringLength.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/EmailAddress.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/Integer.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/Float.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/Number.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/NumberRange.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/RegularExpression.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/Count.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/FileSize.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Validators/DateRange.yaml' }
 
-    - { resource: './FormElements/Form.yaml' }
-    - { resource: './FormElements/Page.yaml' }
-    - { resource: './FormElements/SummaryPage.yaml' }
-    - { resource: './FormElements/Fieldset.yaml' }
-    - { resource: './FormElements/GridColumn.yaml' }
-    - { resource: './FormElements/GridRow.yaml' }
-    - { resource: './FormElements/Text.yaml' }
-    - { resource: './FormElements/Password.yaml' }
-    - { resource: './FormElements/AdvancedPassword.yaml' }
-    - { resource: './FormElements/Textarea.yaml' }
-    - { resource: './FormElements/Honeypot.yaml' }
-    - { resource: './FormElements/Hidden.yaml' }
-    - { resource: './FormElements/Email.yaml' }
-    - { resource: './FormElements/Telephone.yaml' }
-    - { resource: './FormElements/Url.yaml' }
-    - { resource: './FormElements/Number.yaml' }
-    - { resource: './FormElements/Date.yaml' }
-    - { resource: './FormElements/Checkbox.yaml' }
-    - { resource: './FormElements/MultiCheckbox.yaml' }
-    - { resource: './FormElements/MultiSelect.yaml' }
-    - { resource: './FormElements/RadioButton.yaml' }
-    - { resource: './FormElements/SingleSelect.yaml' }
-    - { resource: './FormElements/CountrySelect.yaml' }
-    - { resource: './FormElements/DatePicker.yaml' }
-    - { resource: './FormElements/StaticText.yaml' }
-    - { resource: './FormElements/ContentElement.yaml' }
-    - { resource: './FormElements/FileUpload.yaml' }
-    - { resource: './FormElements/ImageUpload.yaml' }
+  # Form elements
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Form.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Page.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/SummaryPage.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Fieldset.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/GridColumn.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/GridRow.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Text.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Password.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/AdvancedPassword.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Textarea.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Honeypot.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Hidden.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Email.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Telephone.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Url.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Number.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Date.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/Checkbox.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/MultiCheckbox.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/MultiSelect.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/RadioButton.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/SingleSelect.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/CountrySelect.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/DatePicker.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/StaticText.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/ContentElement.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/FileUpload.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/FormElements/ImageUpload.yaml' }
 
-    - { resource: './Finishers/Closure.yaml' }
-    - { resource: './Finishers/Confirmation.yaml' }
-    - { resource: './Finishers/EmailToSender.yaml' }
-    - { resource: './Finishers/EmailToReceiver.yaml' }
-    - { resource: './Finishers/DeleteUploads.yaml' }
-    - { resource: './Finishers/FlashMessage.yaml' }
-    - { resource: './Finishers/Redirect.yaml' }
-    - { resource: './Finishers/SaveToDatabase.yaml' }
+  # Finishers
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/Closure.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/Confirmation.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/EmailToSender.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/EmailToReceiver.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/DeleteUploads.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/FlashMessage.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/Redirect.yaml' }
+  - { resource: 'EXT:form/Configuration/Form/Base/Finishers/SaveToDatabase.yaml' }
+
+name: typo3/form-base
+label: 'TYPO3 Form — Base Configuration'
+priority: 10
 
 persistenceManager:
   allowedFileMounts:

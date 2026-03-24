@@ -38,12 +38,6 @@ final class FormPersistenceManagerTest extends FunctionalTestCase
         'typo3/sysext/form/Tests/Functional/Mvc/Persistence/Fixtures/Folders/fileadmin/form_definitions' => 'fileadmin/form_definitions',
     ];
 
-    protected array $configurationToUseInTestInstance = [
-        'FE' => [
-            'defaultTypoScript_setup' => '@import "EXT:form/Tests/Functional/Mvc/Persistence/Fixtures/formSetup.typoscript"',
-        ],
-    ];
-
     protected function setUp(): void
     {
         parent::setUp();

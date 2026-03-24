@@ -1,3 +1,6 @@
+name: typo3/form-caching-tests
+label: 'TYPO3 Caching Test Configuration'
+
 persistenceManager:
   allowedExtensionPaths:
     1628755200: EXT:form_caching_tests/Resources/Private/Form/

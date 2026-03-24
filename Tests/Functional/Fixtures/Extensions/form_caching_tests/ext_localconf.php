@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 use TYPO3Tests\FormCachingTests\Controller\FormCachingTestsController;
 
@@ -29,14 +28,4 @@ call_user_func(static function () {
         [FormCachingTestsController::class => ['someRender', 'somePerform']],
         [FormCachingTestsController::class => ['someRender', 'somePerform']],
     );
-
-    ExtensionManagementUtility::addTypoScriptSetup('
-        plugin.tx_form {
-            settings {
-                yamlConfigurations {
-                    1628755200 = EXT:form_caching_tests/Configuration/Yaml/FormSetup.yaml
-                }
-            }
-        }
-    ');
 });

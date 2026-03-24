@@ -21,14 +21,19 @@ field with additional select options:
 Add Autocomplete options to the backend editor
 ==============================================
 
-Extend the EXT:form configuration:
+Create a form set in your extension and add a :file:`config.yaml` with the
+additional autocomplete options. The file is auto-discovered — no PHP or
+TypoScript registration is required.
 
-..  literalinclude:: _setup.typoscript
-    :language: typoscript
-    :caption: EXT:my_sitepackage/Configuration/TypoScript/setup.typoscript
+..  code-block:: none
+    :caption: Required directory layout
 
-Redefine the backend input in the extended YAML:
+    EXT:my_sitepackage/
+      Configuration/
+        Form/
+          SitePackage/
+            config.yaml
 
-..  literalinclude:: _CustomFormSetupAutoCompleteOption.yaml
+..  literalinclude:: _config.yaml
     :language: yaml
-    :caption: EXT:my_sitepackage/Configuration/Form/CustomFormSetup.yaml
+    :caption: EXT:my_sitepackage/Configuration/Form/SitePackage/config.yaml

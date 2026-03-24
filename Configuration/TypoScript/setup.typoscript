@@ -15,12 +15,6 @@ plugin.tx_form {
     mvc {
         callDefaultActionIfActionCantBeResolved = 1
     }
-
-    settings {
-        yamlConfigurations {
-            10 = EXT:form/Configuration/Yaml/FormSetup.yaml
-        }
-    }
 }
 
 # Rendering of content elements

@@ -55,14 +55,12 @@ final class FormManagerControllerTest extends FunctionalTestCase
         'form',
     ];
 
-    protected array $pathsToProvideInTestInstance = [
-        'typo3/sysext/form/Tests/Functional/Controller/Fixtures/Folders/fileadmin/form_definitions' => 'fileadmin/form_definitions',
+    protected array $testExtensionsToLoad = [
+        'typo3/sysext/form/Tests/Functional/Fixtures/Extensions/form_manager_controller_tests',
     ];
 
-    protected array $configurationToUseInTestInstance = [
-        'FE' => [
-            'defaultTypoScript_setup' => '@import "EXT:form/Tests/Functional/Controller/Fixtures/formSetup.typoscript"',
-        ],
+    protected array $pathsToProvideInTestInstance = [
+        'typo3/sysext/form/Tests/Functional/Controller/Fixtures/Folders/fileadmin/form_definitions' => 'fileadmin/form_definitions',
     ];
 
     #[Test]

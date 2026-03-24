@@ -50,7 +50,7 @@ final readonly class StorageAdapterFactory
      * Uses Chain of Responsibility pattern to find the first adapter
      * (in priority order) that supports the given identifier.
      *
-     * @param string $identifier Persistence identifier (e.g., "EXT:my_ext/Forms/contact.form.yaml", "1:/forms/contact.form.yaml")
+     * @param string $identifier Persistence identifier (e.g., "EXT:my_extension/Forms/contact.form.yaml", "1:/forms/contact.form.yaml")
      * @throws \RuntimeException if no adapter can handle the identifier
      */
     public function getAdapterForIdentifier(string $identifier): StorageAdapterInterface

@@ -21,27 +21,33 @@ Before you start, make sure you have:
 * Basic knowledge of YAML configuration
 * A sitepackage where you can add configuration files
 
-Step 1: Create the configuration file
-=====================================
+Step 1: Create the configuration files
+======================================
 
-First, create a YAML configuration file for your custom form element. This file
-defines how the element behaves in both form editor and frontend.
+Create a form set directory in your extension. The sub-directory name is
+arbitrary — we use ``CustomElement`` here.
 
 File location
 -------------
 
-Create the following file in your extension (also create the directories if they do not yet exist):
+Create the following structure in your extension:
 
-:file:`EXT:my_extension/Configuration/Form/CustomFormSetup.yaml`
+..  code-block:: none
 
-Configuration Structure
+    EXT:my_extension/
+      Configuration/
+        Form/
+          CustomElement/
+            config.yaml
+
+Configuration structure
 -----------------------
 
 Here's the complete configuration for our Gender Select element:
 
 .. literalinclude:: _CustomFormSetup.yaml
    :language: yaml
-   :caption: EXT:my_extension/Configuration/Form/CustomFormSetup.yaml
+   :caption: EXT:my_extension/Configuration/Form/CustomElement/config.yaml (after metadata)
 
 Common inspector editors
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,47 +78,33 @@ Here are some commonly used inspector editors (:ref:`Inspector <concepts-formedi
 Step 2: Register the configuration
 ===================================
 
-The YAML configuration must be registered in two places to work in both the form
-editor (backend) and the frontend.
+No PHP or TypoScript registration is needed. TYPO3 discovers YAML files
+automatically from any extension that follows the directory convention.
 
-Backend registration (Form Editor)
-----------------------------------
+Create a form set with a single :file:`config.yaml`:
 
-Register your YAML configuration file in your extension's
-:file:`ext_localconf.php`:
+..  code-block:: none
 
-.. literalinclude:: _ext_localconf.php
-   :language: php
-   :caption: EXT:my_extension/ext_localconf.php
+    EXT:my_extension/
+      Configuration/
+        Form/
+          CustomElement/
+            config.yaml     ← set metadata + all configuration
 
-.. important::
+Set the ``priority`` in :file:`config.yaml` to a value greater than ``10``
+(the EXT:form core base set) so your configuration is merged on top:
 
-   The numeric key (``1732785702`` in this example) should be unique across all
-   configurations. You can use a timestamp to ensure uniqueness. This number
-   determines the loading order - higher numbers are loaded later and can override
-   earlier settings.
+..  code-block:: yaml
+    :caption: EXT:my_extension/Configuration/Form/CustomElement/config.yaml
 
-Frontend registration (TypoScript)
------------------------------------
+    name: my-vendor/custom-element
+    label: 'My Custom Form Element'
+    priority: 200
 
-To render the custom form element in the frontend, you must also register the
-YAML configuration via TypoScript. Add the following to your site's TypoScript
-setup (e.g., in :file:`EXT:my_extension/Configuration/TypoScript/setup.typoscript`):
-
-.. code-block:: typoscript
-   :caption: EXT:my_extension/Configuration/TypoScript/setup.typoscript
-
-   plugin.tx_form {
-       settings {
-           yamlConfigurations {
-               1732785702 = EXT:my_extension/Configuration/Form/CustomFormSetup.yaml
-           }
-       }
-   }
-
-.. note::
-
-   Please make sure your TypoScript template is included in the site configuration.
+    # Form element configuration goes here:
+    prototypes:
+      standard:
+        ...
 
 Step 3: Clear Caches
 ====================
@@ -159,7 +151,7 @@ Update configuration
 Update your YAML configuration to use the custom partial template:
 
 .. code-block:: yaml
-   :caption: EXT:my_extension/Configuration/Form/CustomFormSetup.yaml
+   :caption: EXT:my_extension/Configuration/Form/CustomElement/config.yaml
    :emphasize-lines: 3-7, 10
 
    prototypes:

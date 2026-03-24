@@ -16,80 +16,80 @@ How do I override EXT:Form frontend templates?
 There are two ways to override the frontend templates.
 
 
-Add fluid search paths globally
--------------------------------
+Add fluid search paths via a form set (recommended)
+----------------------------------------------------
 
-EXT:form uses YAML as a configuration language so you will need to register your
-own YAML files to override/add information. Let us assume you are using
-sitepackage ``EXT:my_site_package`` which contains your frontend
-integration.
+Create a form set in your site package. The YAML files are picked up
+automatically for **both** frontend and backend — no PHP or TypoScript
+registration is required.
 
+1.  Create the directory and a :file:`config.yaml` with the template paths:
 
-EXT:my_site_package/Configuration/TypoScript/setup.typoscript
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ..  code-block:: none
 
-First of all, register a new YAML configuration file for the frontend
-using TypoScript.
+        EXT:my_site_package/
+          Configuration/
+            Form/
+              SitePackage/
+                config.yaml
 
-.. code-block:: typoscript
+    ..  code-block:: yaml
+        :caption: EXT:my_site_package/Configuration/Form/SitePackage/config.yaml
 
-   plugin.tx_form {
-       settings {
-           yamlConfigurations {
-               # register your own additional configuration
-               # choose a number higher than 10 (10 is reserved)
-               100 = EXT:my_site_package/Configuration/Form/CustomFormSetup.yaml
-           }
-       }
-   }
+        name: my-site-package/form
+        label: 'My Site Package — Form Configuration'
+        priority: 200
 
-
-EXT:my_site_package/Configuration/Form/CustomFormSetup.yaml
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Next, add your sitepackage fluid template paths to your new file (CustomFormSetup.yaml above).
-
-.. code-block:: yaml
-
-   prototypes:
-     standard:
-       formElementsDefinition:
-         Form:
-           renderingOptions:
-             templateRootPaths:
-               20: 'EXT:my_site_package/Resources/Private/Templates/Form/Frontend/'
-             partialRootPaths:
-               20: 'EXT:my_site_package/Resources/Private/Partials/Form/Frontend/'
-             layoutRootPaths:
-               20: 'EXT:my_site_package/Resources/Private/Layouts/Form/Frontend/'
+        prototypes:
+          standard:
+            formElementsDefinition:
+              Form:
+                renderingOptions:
+                  templateRootPaths:
+                    20: 'EXT:my_site_package/Resources/Private/Templates/Form/Frontend/'
+                  partialRootPaths:
+                    20: 'EXT:my_site_package/Resources/Private/Partials/Form/Frontend/'
+                  layoutRootPaths:
+                    20: 'EXT:my_site_package/Resources/Private/Layouts/Form/Frontend/'
 
 .. note::
 
-   You can preview forms in the backend form editor and the preview function
-   uses the frontend templates as well. If you want the preview function to show your customized
-   templates, register your fluid paths in the backend module as well as the frontend as shown below.
+   Forms can be previewed in the backend form editor. The preview uses the
+   same frontend templates. Your customized templates are automatically used
+   in the preview as well.
+
+See :ref:`concepts-configuration-yaml-autodiscovery` for the full directory
+convention.
 
 
-EXT:my_site_package/ext_localconf.php
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Add fluid search paths via TypoScript ``yamlSettingsOverrides``
+---------------------------------------------------------------
 
-Register your configuration YAML for the backend aswell by using
-TypoScript in a :file:`ext_localconf.php` file. See
-:ref:`chapter on configuration concepts <concepts-configuration-yamlregistration-backend>`
-for more information.
+For quick, per-site overrides without creating a full form set, you can use
+:typoscript:`plugin.tx_form.settings.yamlSettingsOverrides`:
 
-..  code-block:: php
-    :caption: EXT:my_extension/ext_localconf.php
+..  code-block:: typoscript
 
-    ExtensionManagementUtility::addTypoScriptSetup('
-       module.tx_form {
-           settings {
-               yamlConfigurations {
-                   1732786693 = EXT:my_site_package/Configuration/Form/CustomFormSetup.yaml
-               }
-           }
-       }
-    ');
+    plugin.tx_form.settings.yamlSettingsOverrides {
+        prototypes {
+            standard {
+                formElementsDefinition {
+                    Form {
+                        renderingOptions {
+                            templateRootPaths {
+                                20 = EXT:my_site_package/Resources/Private/Templates/Form/Frontend/
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+.. note::
+
+   TypoScript ``yamlSettingsOverrides`` are evaluated in the **frontend only**
+   and are ignored by the backend form editor.
 
 
 .. _faq-prevent-double-submissions:

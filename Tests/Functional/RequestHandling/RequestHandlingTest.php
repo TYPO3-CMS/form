@@ -53,6 +53,7 @@ final class RequestHandlingTest extends FunctionalTestCase
     protected array $coreExtensionsToLoad = ['form', 'fluid_styled_content'];
     protected array $testExtensionsToLoad = [
         'typo3/sysext/form/Tests/Functional/Fixtures/Extensions/form_caching_tests',
+        'typo3/sysext/form/Tests/Functional/Fixtures/Extensions/form_request_handling_tests',
     ];
     protected array $configurationToUseInTestInstance = [
         'MAIL' => [

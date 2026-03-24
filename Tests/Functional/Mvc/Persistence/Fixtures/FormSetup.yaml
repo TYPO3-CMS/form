@@ -1,3 +1,0 @@
-persistenceManager:
-  allowedExtensionPaths:
-    10: EXT:test_form_persistence/Resources/Private/Forms/

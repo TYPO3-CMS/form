@@ -24,6 +24,8 @@ use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 use TYPO3\CMS\Core\Http\ServerRequest;
+use TYPO3\CMS\Core\TypoScript\AST\Node\RootNode;
+use TYPO3\CMS\Core\TypoScript\FrontendTypoScript;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface as ExtbaseConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\ExtbaseRequestParameters;
 use TYPO3\CMS\Extbase\Mvc\Request;
@@ -55,7 +57,15 @@ final class FormRuntimeTest extends FunctionalTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->loadDefaultYamlConfigurations();
+        // FormRuntime is a frontend concept. Provide a minimal FE request with an empty
+        // (but valid) FrontendTypoScript so that FrontendConfigurationManager can operate
+        // without requiring a fully-bootstrapped TypoScript pipeline.
+        $frontendTypoScript = new FrontendTypoScript(new RootNode(), [], [], []);
+        $frontendTypoScript->setSetupArray([]);
+        $feRequest = (new ServerRequest())
+            ->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_FE)
+            ->withAttribute('frontend.typoscript', $frontendTypoScript);
+        $this->get(ExtbaseConfigurationManagerInterface::class)->setRequest($feRequest);
         $this->formFactory = $this->get(ArrayFormFactory::class);
         $this->request = $this->buildExtbaseRequest();
     }
@@ -356,24 +366,5 @@ final class FormRuntimeTest extends FunctionalTestCase
                 ],
             ],
         ], null, new ServerRequest());
-    }
-
-    private function loadDefaultYamlConfigurations(): void
-    {
-        $configurationManager = $this->get(ExtbaseConfigurationManagerInterface::class);
-        $configurationManager->setRequest(
-            (new ServerRequest())->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE)
-        );
-        $configurationManager->setConfiguration([
-            'plugin.' => [
-                'tx_form.' => [
-                    'settings.' => [
-                        'yamlConfigurations.' => [
-                            '10' => 'EXT:form/Configuration/Yaml/FormSetup.yaml',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
     }
 }

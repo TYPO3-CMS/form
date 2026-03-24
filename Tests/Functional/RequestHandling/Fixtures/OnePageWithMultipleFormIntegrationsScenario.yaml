@@ -32,7 +32,7 @@ entities:
     - self: {id: 1000, title: 'my first website', slug: /, doktype: 1, is_siteroot: 1}
       entities:
         template:
-          - self: {id: 1000, title: main, root: 1, clear: 3, include_static_file: 'EXT:fluid_styled_content/Configuration/TypoScript/,EXT:form/Configuration/TypoScript/,EXT:form_caching_tests/Configuration/TypoScript', static_file_mode: 3, config: "@import 'EXT:form/Tests/Functional/Fixtures/Frontend/ContentRenderer.typoscript'\n@import 'EXT:form/Tests/Functional/RequestHandling/Fixtures/formSetup.typoscript'"}
+          - self: {id: 1000, title: main, root: 1, clear: 3, include_static_file: 'EXT:fluid_styled_content/Configuration/TypoScript/,EXT:form/Configuration/TypoScript/,EXT:form_caching_tests/Configuration/TypoScript', static_file_mode: 3, config: "@import 'EXT:form/Tests/Functional/Fixtures/Frontend/ContentRenderer.typoscript'"}
       children:
         - self: {id: 1001, title: 'Form page', slug: /form, doktype: 1}
           entities:

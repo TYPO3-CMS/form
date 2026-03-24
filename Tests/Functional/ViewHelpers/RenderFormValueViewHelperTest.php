@@ -54,7 +54,6 @@ final class RenderFormValueViewHelperTest extends FunctionalTestCase
     #[Test]
     public function render(string $template, string $expected): void
     {
-        $this->loadDefaultYamlConfigurations();
         // Init ConfigurationManagerInterface stateful singleton, usually done by extbase bootstrap
         $this->get(ExtbaseConfigurationManagerInterface::class)->setRequest(
             (new ServerRequest())->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE)
@@ -110,21 +109,5 @@ final class RenderFormValueViewHelperTest extends FunctionalTestCase
                 ],
             ],
         ], null, new ServerRequest());
-    }
-
-    private function loadDefaultYamlConfigurations(): void
-    {
-        $configurationManager = $this->get(ExtbaseConfigurationManagerInterface::class);
-        $configurationManager->setConfiguration([
-            'plugin.' => [
-                'tx_form.' => [
-                    'settings.' => [
-                        'yamlConfigurations.' => [
-                            '10' => 'EXT:form/Configuration/Yaml/FormSetup.yaml',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
     }
 }

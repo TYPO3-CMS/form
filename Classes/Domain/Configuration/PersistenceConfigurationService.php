@@ -96,7 +96,7 @@ final readonly class PersistenceConfigurationService
     /**
      * Get allowed extension paths from form configuration
      *
-     * @return string[] Array of allowed extension paths (e.g., ["EXT:my_ext/Configuration/Forms/"])
+     * @return string[] Array of allowed extension paths (e.g., ["EXT:my_extension/Configuration/Forms/"])
      */
     public function getAllowedExtensionPaths(): array
     {

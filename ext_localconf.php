@@ -16,17 +16,6 @@ if (ExtensionManagementUtility::isLoaded('impexp')) {
         = ImportExportHook::class . '->beforeAddSysFileRecordOnImport';
 }
 
-// Add module configuration
-ExtensionManagementUtility::addTypoScriptSetup('
-module.tx_form {
-    settings {
-        yamlConfigurations {
-            10 = EXT:form/Configuration/Yaml/FormSetup.yaml
-        }
-    }
-}
-');
-
 // Register RTE presets for form extension
 // form-label: Simple formatting for labels (bold, italic, link)
 if (empty($GLOBALS['TYPO3_CONF_VARS']['RTE']['Presets']['form-label'])) {

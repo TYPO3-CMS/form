@@ -74,7 +74,7 @@ interface StorageAdapterInterface
     /**
      * Check if this adapter can handle the given persistence identifier
      *
-     * @param string $identifier Persistence identifier (e.g., "EXT:my_ext/Forms/contact.form.yaml", "1:/forms/contact.form.yaml")
+     * @param string $identifier Persistence identifier (e.g., "EXT:my_extension/Forms/contact.form.yaml", "1:/forms/contact.form.yaml")
      * @return bool True if this adapter can handle the identifier
      */
     public function supports(string $identifier): bool;

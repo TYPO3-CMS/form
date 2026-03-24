@@ -1,0 +1,9 @@
+name: typo3tests/form-manager-controller-tests
+label: 'TYPO3 Form Manager Controller Test Configuration'
+
+formManager:
+  selectablePrototypesConfiguration:
+    - identifier: standard
+      newFormTemplates:
+        - templatePath: EXT:form/Tests/Functional/Controller/Fixtures/FormTemplate.yaml
+          label: Test Form Template

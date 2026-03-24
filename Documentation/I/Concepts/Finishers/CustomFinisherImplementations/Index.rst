@@ -253,19 +253,16 @@ section below) to work with in the GUI:
 Configuration registration
 --------------------------
 
-Register the form configuration yaml file in :file:`EXT:my_extension/ext_localconf.php`:
+Place your YAML files in a form set directory — no PHP registration needed:
 
-..  literalinclude:: _codesnippets/_ext_localconf.php
-    :caption: EXT:my_extension/ext_localconf.php
+..  code-block:: none
+
+    EXT:my_extension/
+      Configuration/
+        Form/
+          MyFinisher/
+            config.yaml
 
 ..  seealso::
 
-    `YAML registration for the backend <https://docs.typo3.org/permalink/typo3/cms-form:concepts-configuration-yamlregistration-backend-addtyposcriptsetup>`_
-
-..  versionchanged:: 13.0
-
-    Registration of global TypoScript for the TYPO3 backend has to be done in
-    an extensions :file:`ext_localconf.php` using method `ExtensionManagementUtility::addTypoScriptSetup`.
-
-    Former methods for registering global TypoScript are not compatible with
-    site sets.
+    :ref:`concepts-configuration-yaml-autodiscovery`

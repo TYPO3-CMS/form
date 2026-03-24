@@ -1,0 +1,7 @@
+name: typo3tests/test-form-persistence
+label: 'TYPO3 Form Persistence Test Configuration'
+
+persistenceManager:
+  allowedExtensionPaths:
+    10: EXT:test_form_persistence/Resources/Private/Forms/
+

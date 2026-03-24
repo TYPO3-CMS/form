@@ -6,7 +6,17 @@ services:
 
   TYPO3\CMS\Form\:
     resource: '../Classes/*'
-    exclude: '../Classes/{Domain/Model}'
+    exclude:
+      - '../Classes/{Domain/Model}'
+      - '../Classes/Mvc/Configuration/FormYamlConfiguration.php'
+
+  # Explicitly declared public so that ConfigurationManager can receive it via
+  # DI autowiring. Populated at container build time via FormYamlCollectorConfigurator.
+  TYPO3\CMS\Form\Mvc\Configuration\FormYamlCollector:
+    public: true
+    configurator:
+      - '@TYPO3\CMS\Form\DependencyInjection\FormYamlCollectorConfigurator'
+      - 'configure'
 
   TYPO3\CMS\Form\SoftReference\FormPersistenceIdentifierSoftReferenceParser:
     tags:
