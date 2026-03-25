@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Form\EventListener;
 
 use TYPO3\CMS\Backend\RecordList\Event\ModifyRecordListRecordActionsEvent;
+use TYPO3\CMS\Backend\RecordList\Event\ModifyRecordListTableActionsEvent;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\Components\ActionGroup;
 use TYPO3\CMS\Backend\Template\Components\ComponentFactory;
@@ -43,8 +44,8 @@ final readonly class ModifyFormDefinitionRecordActionsEventListener
         private UriBuilder $uriBuilder,
     ) {}
 
-    #[AsEventListener('form-framework/modify-form-definition-record-list-actions')]
-    public function __invoke(ModifyRecordListRecordActionsEvent $event): void
+    #[AsEventListener('form-framework/modify-form-definition-record-list-actions', method: 'modifyRecordListRecordActions')]
+    public function modifyRecordListRecordActions(ModifyRecordListRecordActionsEvent $event): void
     {
         if ($event->getRecord()->getMainType() !== FormDefinitionRepository::TABLE_NAME) {
             return;
@@ -69,8 +70,24 @@ final readonly class ModifyFormDefinitionRecordActionsEventListener
             $event->setAction($editButton, 'edit', ActionGroup::primary);
         }
 
-        // Remove the "delete" action — deletion of form_definition records
-        // should only be done through the Form Manager module for now.
+        // The “delete” action is being removed because references in the FlexForm are not taken into account
+        // (no warning is displayed).
         $event->removeAction('delete', ActionGroup::primary);
+    }
+
+    /**
+     * The “edit” action is being removed, as it is not possible to edit multiple forms simultaneously.
+     * The form editor should always be used for editing.
+     * The “delete” action is being removed because references in the FlexForm are not taken into account
+     * (no warning is displayed).
+     */
+    #[AsEventListener('form-framework/modify-form-definition-record-list-table-actions', method: 'modifyRecordListTableActions')]
+    public function modifyRecordListTableActions(ModifyRecordListTableActionsEvent $event): void
+    {
+        if ($event->getTable() !== FormDefinitionRepository::TABLE_NAME) {
+            return;
+        }
+        $event->removeAction('edit');
+        $event->removeAction('delete');
     }
 }
