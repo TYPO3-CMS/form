@@ -96,6 +96,7 @@ class ArrayFormFactory extends AbstractFormFactory
         unset($configuration['type']);
         unset($configuration['identifier']);
         $form->setOptions($configuration);
+        $form->setRequest($request);
 
         return $this->triggerFormBuildingFinished($form);
     }

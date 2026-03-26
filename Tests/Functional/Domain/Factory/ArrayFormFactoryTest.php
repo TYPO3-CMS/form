@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Form\Tests\Functional\Domain\Factory;
 
 use PHPUnit\Framework\Attributes\Test;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
@@ -124,5 +125,22 @@ final class ArrayFormFactoryTest extends FunctionalTestCase
 
         self::assertInstanceOf(AfterFormIsBuiltEvent::class, $state[self::AFTER_FORM_IS_BUILT_LISTENER_KEY]);
         self::assertEquals('foo', $state[self::AFTER_FORM_IS_BUILT_LISTENER_KEY]->form->getLabel());
+    }
+
+    #[Test]
+    public function formDefinitionAfterBuildHasRequestSet(): void
+    {
+        $request = (new ServerRequest())->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE);
+        $extbaseConfigurationManager = $this->get(ExtbaseConfigurationManagerInterface::class);
+        $extbaseConfigurationManager->setRequest($request);
+
+        $arrayFormFactory = $this->get(ArrayFormFactory::class);
+        $configuration = [
+            'label' => 'Form',
+            'identifier' => 'form-1',
+        ];
+
+        $formDefinition = $arrayFormFactory->build($configuration, 'standard', $request);
+        self::assertInstanceOf(ServerRequestInterface::class, $formDefinition->getRequest());
     }
 }
