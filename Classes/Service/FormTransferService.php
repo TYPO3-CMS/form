@@ -33,7 +33,7 @@ use TYPO3\CMS\Form\Storage\StorageAdapterInterface;
 /**
  * Service for transferring form definitions between storage backends
  *
- * Used by the CLI command `form:formdefinition:transfer` and the
+ * Used by the CLI command `form:definition:transfer` and the
  * upgrade wizard for migrating file-based forms to database storage.
  * Handles reading from a source storage adapter, ensuring identifier
  * uniqueness, and writing to a target storage adapter.

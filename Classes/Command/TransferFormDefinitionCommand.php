@@ -34,21 +34,21 @@ use TYPO3\CMS\Form\Service\FormTransferService;
  *
  * Usage examples:
  *   # Transfer all forms from extension storage to database
- *   bin/typo3 form:formdefinition:transfer --source=extension --target=database
+ *   bin/typo3 form:definition:transfer --source=extension --target=database
  *
  *   # Transfer a specific form
- *   bin/typo3 form:formdefinition:transfer --source=extension --target=database --form-identifier=contact
+ *   bin/typo3 form:definition:transfer --source=extension --target=database --form-identifier=contact
  *
  *   # Move forms (transfer + delete source)
- *   bin/typo3 form:formdefinition:transfer --source=filemount --target=database --move
+ *   bin/typo3 form:definition:transfer --source=filemount --target=database --move
  *
  *   # Dry-run: preview what would be transferred
- *   bin/typo3 form:formdefinition:transfer --source=extension --target=database --dry-run
+ *   bin/typo3 form:definition:transfer --source=extension --target=database --dry-run
  *
  *   # Transfer to a specific target location (PID for database)
- *   bin/typo3 form:formdefinition:transfer --source=extension --target=database --target-location=42
+ *   bin/typo3 form:definition:transfer --source=extension --target=database --target-location=42
  */
-#[AsCommand('form:formdefinition:transfer', 'Transfer form definitions between storage backends')]
+#[AsCommand('form:definition:transfer', 'Transfer form definitions between storage backends')]
 class TransferFormDefinitionCommand extends Command
 {
     public function __construct(
