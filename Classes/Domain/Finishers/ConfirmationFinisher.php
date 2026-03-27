@@ -103,9 +103,9 @@ class ConfirmationFinisher extends AbstractFinisher
 
         $formRuntime = $this->finisherContext->getFormRuntime();
         $viewFactoryData = new ViewFactoryData(
-            templateRootPaths: is_array($options['templateRootPaths'] ?? false) ? $options['templateRootPaths'] : [],
-            partialRootPaths: is_array($options['partialRootPaths'] ?? false) ? $options['partialRootPaths'] : [],
-            layoutRootPaths: is_array($options['layoutRootPaths'] ?? false) ? $options['layoutRootPaths'] : [],
+            templateRootPaths: is_array($options['templateRootPaths'] ?? null) ? $options['templateRootPaths'] : [],
+            partialRootPaths: is_array($options['partialRootPaths'] ?? null) ? $options['partialRootPaths'] : [],
+            layoutRootPaths: is_array($options['layoutRootPaths'] ?? null) ? $options['layoutRootPaths'] : [],
             request: $this->finisherContext->getRequest(),
         );
         $view = $this->viewFactory->create($viewFactoryData);
@@ -113,7 +113,7 @@ class ConfirmationFinisher extends AbstractFinisher
             $view->getRenderingContext()->getViewHelperVariableContainer()
                 ->addOrUpdate(RenderRenderableViewHelper::class, 'formRuntime', $formRuntime);
         }
-        if (isset($this->options['variables']) && is_array($this->options['variables'])) {
+        if (is_array($this->options['variables'] ?? null)) {
             $view->assignMultiple($this->options['variables']);
         }
         $view->assignMultiple([

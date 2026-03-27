@@ -70,25 +70,27 @@ final class FileSizeValidator extends AbstractValidator implements ObjectStorage
 
         $labels = ' Bytes| Kilobyte| Megabyte| Gigabyte';
         if ($fileSize < $minFileSize) {
+            $formattedMinFileSize = GeneralUtility::formatSize($minFileSize, $labels);
             $this->addError(
                 $this->translateErrorMessage(
                     'validation.error.1505305752',
                     'form',
-                    [GeneralUtility::formatSize($minFileSize, $labels)]
+                    [$formattedMinFileSize]
                 ),
                 1505305752,
-                [GeneralUtility::formatSize($minFileSize, $labels)]
+                [$formattedMinFileSize]
             );
         }
         if ($fileSize > $maxFileSize) {
+            $formattedMaxFileSize = GeneralUtility::formatSize($maxFileSize, $labels);
             $this->addError(
                 $this->translateErrorMessage(
                     'validation.error.1505305753',
                     'form',
-                    [GeneralUtility::formatSize($maxFileSize, $labels)]
+                    [$formattedMaxFileSize]
                 ),
                 1505305753,
-                [GeneralUtility::formatSize($maxFileSize, $labels)]
+                [$formattedMaxFileSize]
             );
         }
     }

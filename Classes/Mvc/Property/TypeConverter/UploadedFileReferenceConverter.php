@@ -202,7 +202,7 @@ class UploadedFileReferenceConverter extends AbstractTypeConverter implements Lo
     ): FileReference|Error|null {
         // Extract the submitted file resource pointer from __submittedFiles
         $submittedResourcePointer = null;
-        if (isset($source['__submittedFiles']) && is_array($source['__submittedFiles'])) {
+        if (is_array($source['__submittedFiles'] ?? null)) {
             $firstSubmitted = reset($source['__submittedFiles']);
             $submittedResourcePointer = $firstSubmitted['submittedFile']['resourcePointer'] ?? null;
         }
@@ -242,7 +242,7 @@ class UploadedFileReferenceConverter extends AbstractTypeConverter implements Lo
         // These are stored separately to avoid index collision with new UploadedFile
         // objects during array_replace_recursive() in RequestBuilder.
         $submittedFiles = [];
-        if (isset($source['__submittedFiles']) && is_array($source['__submittedFiles'])) {
+        if (is_array($source['__submittedFiles'] ?? null)) {
             $submittedFiles = $source['__submittedFiles'];
         }
         unset($source['__submittedFiles']);

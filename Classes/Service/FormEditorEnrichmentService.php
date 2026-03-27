@@ -67,11 +67,11 @@ class FormEditorEnrichmentService implements SingletonInterface
      */
     protected function enrichDefinitionWithRichTextOptions(array &$definition): void
     {
-        if (isset($definition['editors']) && is_array($definition['editors'])) {
+        if (is_array($definition['editors'] ?? null)) {
             $this->enrichEditorsWithRichTextOptions($definition['editors']);
         }
 
-        if (isset($definition['propertyCollections']) && is_array($definition['propertyCollections'])) {
+        if (is_array($definition['propertyCollections'] ?? null)) {
             $this->enrichPropertyCollectionsWithRichTextOptions($definition['propertyCollections']);
         }
     }
@@ -90,7 +90,7 @@ class FormEditorEnrichmentService implements SingletonInterface
             }
 
             foreach ($collectionItems as &$collectionItem) {
-                if (isset($collectionItem['editors']) && is_array($collectionItem['editors'])) {
+                if (is_array($collectionItem['editors'] ?? null)) {
                     $this->enrichEditorsWithRichTextOptions($collectionItem['editors']);
                 }
             }

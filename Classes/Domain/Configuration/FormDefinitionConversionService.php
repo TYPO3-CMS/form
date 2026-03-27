@@ -194,7 +194,7 @@ class FormDefinitionConversionService
         }
 
         // Recurse into renderables (form elements on pages)
-        if (isset($formDefinition['renderables']) && is_array($formDefinition['renderables'])) {
+        if (is_array($formDefinition['renderables'] ?? null)) {
             foreach ($formDefinition['renderables'] as $key => $renderable) {
                 if (is_array($renderable)) {
                     $formDefinition['renderables'][$key] = $this->transformRteContentRecursively(
@@ -208,7 +208,7 @@ class FormDefinitionConversionService
         }
 
         // Transform finisher options
-        if (isset($formDefinition['finishers']) && is_array($formDefinition['finishers'])) {
+        if (is_array($formDefinition['finishers'] ?? null)) {
             $finisherRtePaths = $rtePropertyPaths['_finishers'] ?? [];
             foreach ($formDefinition['finishers'] as $key => $finisher) {
                 if (!is_array($finisher)) {

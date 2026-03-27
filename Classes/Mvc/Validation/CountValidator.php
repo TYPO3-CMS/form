@@ -57,7 +57,8 @@ final class CountValidator extends AbstractValidator
 
         $minimum = (int)$this->options['minimum'];
         $maximum = (int)$this->options['maximum'];
-        if (count($value) < $minimum || count($value) > $maximum) {
+        $count = count($value);
+        if ($count < $minimum || $count > $maximum) {
             $this->addError(
                 $this->translateErrorMessage(
                     'validation.error.1475002994',

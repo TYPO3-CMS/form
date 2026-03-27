@@ -67,26 +67,28 @@ final class DateRangeValidator extends AbstractValidator implements LoggerAwareI
         $value->modify('midnight');
 
         if ($minimum instanceof \DateTime && $value < $minimum) {
+            $formattedMinimum = $minimum->format($format);
             $this->addError(
                 $this->translateErrorMessage(
                     'validation.error.1521293687',
                     'form',
-                    [$minimum->format($format)]
+                    [$formattedMinimum]
                 ),
                 1521293687,
-                [$minimum->format($format)]
+                [$formattedMinimum]
             );
         }
 
         if ($maximum instanceof \DateTime && $value > $maximum) {
+            $formattedMaximum = $maximum->format($format);
             $this->addError(
                 $this->translateErrorMessage(
                     'validation.error.1521293686',
                     'form',
-                    [$maximum->format($format)]
+                    [$formattedMaximum]
                 ),
                 1521293686,
-                [$maximum->format($format)]
+                [$formattedMaximum]
             );
         }
     }

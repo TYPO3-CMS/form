@@ -127,11 +127,9 @@ class ArrayFormFactory extends AbstractFormFactory
             throw new UnknownCompositRenderableException('Unknown composit renderable "' . get_class($parentRenderable) . '"', 1479593622);
         }
 
-        if (isset($nestedRenderableConfiguration['renderables']) && is_array($nestedRenderableConfiguration['renderables'])) {
-            $childRenderables = $nestedRenderableConfiguration['renderables'];
-        } else {
-            $childRenderables = [];
-        }
+        $childRenderables = is_array($nestedRenderableConfiguration['renderables'] ?? null)
+            ? $nestedRenderableConfiguration['renderables']
+            : [];
 
         unset($nestedRenderableConfiguration['type']);
         unset($nestedRenderableConfiguration['identifier']);

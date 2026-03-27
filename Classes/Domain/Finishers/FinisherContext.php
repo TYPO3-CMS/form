@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Form\Domain\Finishers;
 
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Request;
 use TYPO3\CMS\Form\Domain\Runtime\FormRuntime;
 
@@ -61,7 +60,7 @@ class FinisherContext
     {
         $this->formRuntime = $formRuntime;
         $this->request = $request;
-        $this->finisherVariableProvider = GeneralUtility::makeInstance(FinisherVariableProvider::class);
+        $this->finisherVariableProvider = new FinisherVariableProvider();
     }
 
     /**

@@ -61,7 +61,7 @@ class FileUpload extends AbstractFormElement
             ->setTypeConverter($typeConverter);
 
         $allowedMimeTypes = [];
-        if (isset($this->getProperties()['allowedMimeTypes']) && \is_array($this->getProperties()['allowedMimeTypes'])) {
+        if (is_array($this->getProperties()['allowedMimeTypes'] ?? null)) {
             $allowedMimeTypes = array_filter($this->getProperties()['allowedMimeTypes']);
         }
         if (!empty($allowedMimeTypes)) {

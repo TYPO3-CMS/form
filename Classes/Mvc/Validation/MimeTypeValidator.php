@@ -108,7 +108,7 @@ final class MimeTypeValidator extends AbstractValidator implements ObjectStorage
      */
     private function validateOptions(): void
     {
-        if (!is_array($this->options['allowedMimeTypes'] ?? false) || $this->options['allowedMimeTypes'] === []) {
+        if (!is_array($this->options['allowedMimeTypes'] ?? null) || $this->options['allowedMimeTypes'] === []) {
             throw new InvalidValidationOptionsException('The option "allowedMimeTypes" must be an array with at least one item.', 1471713296);
         }
     }

@@ -71,7 +71,7 @@ abstract class AbstractFinisher implements FinisherInterface, LoggerAwareInterfa
     protected $defaultOptions = [];
 
     /**
-     * @var \TYPO3\CMS\Form\Domain\Finishers\FinisherContext
+     * @var FinisherContext
      */
     protected $finisherContext;
 
@@ -95,7 +95,7 @@ abstract class AbstractFinisher implements FinisherInterface, LoggerAwareInterfa
     public function setFinisherIdentifier(string $finisherIdentifier): void
     {
         $this->finisherIdentifier = $finisherIdentifier;
-        $this->shortFinisherIdentifier = preg_replace('/Finisher$/', '', $this->finisherIdentifier) ?? '';
+        $this->shortFinisherIdentifier = preg_replace('/Finisher$/', '', $finisherIdentifier) ?? '';
     }
 
     public function getFinisherIdentifier(): string
@@ -144,9 +144,9 @@ abstract class AbstractFinisher implements FinisherInterface, LoggerAwareInterfa
             $formRuntime = $this->finisherContext->getFormRuntime();
             $renderingOptions = $formRuntime->getRenderingOptions();
             $viewFactoryData = new ViewFactoryData(
-                templateRootPaths: is_array($renderingOptions['templateRootPaths'] ?? false) ? $renderingOptions['templateRootPaths'] : [],
-                partialRootPaths: is_array($renderingOptions['partialRootPaths'] ?? false) ? $renderingOptions['partialRootPaths'] : [],
-                layoutRootPaths: is_array($renderingOptions['layoutRootPaths'] ?? false) ? $renderingOptions['layoutRootPaths'] : [],
+                templateRootPaths: is_array($renderingOptions['templateRootPaths'] ?? null) ? $renderingOptions['templateRootPaths'] : [],
+                partialRootPaths: is_array($renderingOptions['partialRootPaths'] ?? null) ? $renderingOptions['partialRootPaths'] : [],
+                layoutRootPaths: is_array($renderingOptions['layoutRootPaths'] ?? null) ? $renderingOptions['layoutRootPaths'] : [],
                 request: $this->finisherContext->getRequest(),
             );
             $view = $this->viewFactory->create($viewFactoryData);
@@ -210,7 +210,7 @@ abstract class AbstractFinisher implements FinisherInterface, LoggerAwareInterfa
         $optionValue = $this->substituteRuntimeReferences($optionValue, $formRuntime);
 
         if (is_string($optionValue)) {
-            $translationOptions = isset($this->options['translation']) && \is_array($this->options['translation'])
+            $translationOptions = is_array($this->options['translation'] ?? null)
                                 ? $this->options['translation']
                                 : [];
 
