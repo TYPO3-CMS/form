@@ -111,6 +111,8 @@ final readonly class DatabaseStorageAdapter implements StorageAdapterInterface
             );
         }
 
+        $formDefinitionArray['identifier'] = $record['identifier'];
+
         return FormData::fromArray($formDefinitionArray);
     }
 
