@@ -160,7 +160,7 @@
         <source>Form created</source>
       </trans-unit>
       <trans-unit id="formManager.finisher.redirect.success.description">
-        <source>The form has been successfully created. You will be redirected to the new form.</source>
+        <source>The form has been successfully created. Click "Finish" to be redirected to the newly created form.</source>
       </trans-unit>
     </body>
   </file>
