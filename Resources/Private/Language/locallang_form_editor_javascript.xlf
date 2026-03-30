@@ -9,11 +9,14 @@
       <trans-unit id="formEditor.stage.toolbar.new_element">
         <source>Create new element</source>
       </trans-unit>
-      <trans-unit id="formEditor.stage.toolbar.new_element.inside">
-        <source>Inside</source>
-      </trans-unit>
       <trans-unit id="formEditor.stage.toolbar.new_element.after">
-        <source>After</source>
+        <source>Create new element after</source>
+      </trans-unit>
+      <trans-unit id="formEditor.stage.toolbar.new_element.before">
+        <source>Create new element before</source>
+      </trans-unit>
+      <trans-unit id="formEditor.stage.toolbar.new_element.inside" x-unused-since="14.2">
+        <source>Create new element inside</source>
       </trans-unit>
       <trans-unit id="formEditor.stage.toolbar.remove">
         <source>Remove</source>

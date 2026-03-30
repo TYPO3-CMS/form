@@ -259,7 +259,7 @@
         <source>Save</source>
       </trans-unit>
       <trans-unit id="formEditor.edit_button">
-        <source>Edit</source>
+        <source>Edit form properties</source>
       </trans-unit>
       <trans-unit id="formEditor.undo_button">
         <source>Undo</source>
@@ -272,6 +272,12 @@
       </trans-unit>
       <trans-unit id="formEditor.button_toggle_inspector">
         <source>Toggle inspector</source>
+      </trans-unit>
+      <trans-unit id="formEditor.button_expand_inspector">
+        <source>Show inspector</source>
+      </trans-unit>
+      <trans-unit id="formEditor.button_collapse_inspector">
+        <source>Hide inspector</source>
       </trans-unit>
       <trans-unit id="formEditor.new_page_button">
         <source>Create new step</source>
@@ -1386,10 +1392,10 @@ If you need higher values contact your administrator for help.
       <trans-unit id="formEditor.stage.toolbar.remove">
         <source>Remove</source>
       </trans-unit>
-      <trans-unit id="formEditor.stage.toolbar.new_element.inside">
+      <trans-unit id="formEditor.stage.toolbar.new_element.inside" x-unused-since="14.2">
         <source>Inside</source>
       </trans-unit>
-      <trans-unit id="formEditor.stage.toolbar.new_element.after">
+      <trans-unit id="formEditor.stage.toolbar.new_element.after" x-unused-since="14.2">
         <source>After</source>
       </trans-unit>
       <trans-unit id="formEditor.inspector.editor.formelement_selector.title">
