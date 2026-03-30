@@ -21,6 +21,12 @@
       <trans-unit id="formEditor.step.name.empty">
         <source>Step name is not set</source>
       </trans-unit>
+      <trans-unit id="formEditor.validation.hasError">
+        <source>Has validation errors</source>
+      </trans-unit>
+      <trans-unit id="formEditor.validation.childHasError">
+        <source>Contains elements with validation errors</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
