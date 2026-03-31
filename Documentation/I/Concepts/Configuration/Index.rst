@@ -66,6 +66,9 @@ extensions and loads the files automatically for both frontend and backend.
 
 
 .. _concepts-configuration-yaml-autodiscovery:
+.. _concepts-configuration-yamlregistration-frontend:
+.. _concepts-configuration-yamlregistration-backend:
+.. _concepts-configuration-yamlregistration-backend-addtyposcriptsetup:
 
 Auto-discovery directory convention
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
